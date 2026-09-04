@@ -2,15 +2,42 @@ import React from 'react';
 import { supabase } from '../lib/supabase';
 import { LogIn } from 'lucide-react';
 
+import { App } from '@capacitor/app';
+import { Browser } from '@capacitor/browser';
+
 export const LoginScreen = () => {
-  const handleGoogleLogin = async () => {
-    try {
-      await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin
+  React.useEffect(() => {
+    const setupDeepLink = async () => {
+      App.addListener('appUrlOpen', async (event) => {
+        if (event.url.includes('com.sgtracker.app://')) {
+          await Browser.close();
+          const url = new URL(event.url);
+          // Redirect the webview to root with the auth hash/query so Supabase processes it
+          window.location.href = `/${url.search}${url.hash}`;
         }
       });
+    };
+    setupDeepLink();
+    return () => {
+      App.removeAllListeners();
+    };
+  }, []);
+
+  const handleGoogleLogin = async () => {
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: 'com.sgtracker.app://login-callback',
+          skipBrowserRedirect: true
+        }
+      });
+      
+      if (error) throw error;
+      
+      if (data?.url) {
+        await Browser.open({ url: data.url });
+      }
     } catch (error) {
       console.error('Error logging in with Google:', error.message);
     }
