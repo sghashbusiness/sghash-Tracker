@@ -37,7 +37,7 @@ export const Header = ({ onOpenCloudConfig }) => {
           </span>
         </div>
         <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em', marginTop: '2px' }}>
-          SgTracker <span style={{ fontSize: '0.75rem', color: '#818cf8', fontWeight: 600, background: 'rgba(99, 102, 241, 0.15)', padding: '2px 6px', borderRadius: '6px' }}>PRO</span>
+          SgHash Tracker <span style={{ fontSize: '0.75rem', color: '#818cf8', fontWeight: 600, background: 'rgba(99, 102, 241, 0.15)', padding: '2px 6px', borderRadius: '6px' }}>PRO</span>
         </h1>
       </div>
 
