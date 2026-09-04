@@ -5,39 +5,30 @@ import { Header } from './components/Header';
 import { Navigation } from './components/Navigation';
 import { AddExpenseModal } from './components/AddExpenseModal';
 import { TransferModal } from './components/TransferModal';
-import { CloudConfigModal } from './components/CloudConfigModal';
 import { ManageBanksModal } from './components/ManageBanksModal';
 import { AddLoanModal } from './components/AddLoanModal';
-import { LoginScreen } from './components/LoginScreen';
 import { HomeTab } from './tabs/HomeTab';
 import { BudgetTab } from './tabs/BudgetTab';
 import { LoansTab } from './tabs/LoansTab';
 import { CardsTab } from './tabs/CardsTab';
 
 function AppContent() {
-  const { user, isAuthLoading } = useApp();
+  const { isDataLoaded } = useApp();
 
   const [activeTab, setActiveTab] = useState('home');
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isTransferOpen, setIsTransferOpen] = useState(false);
   const [isManageBanksOpen, setIsManageBanksOpen] = useState(false);
-  const [isCloudConfigOpen, setIsCloudConfigOpen] = useState(false);
   const [isAddLoanOpen, setIsAddLoanOpen] = useState(false);
 
-  if (isAuthLoading) {
+  if (!isDataLoaded) {
     return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-dark)' }}><span style={{ color: 'var(--text-muted)' }}>Loading...</span></div>;
-  }
-
-  if (!user) {
-    return <LoginScreen />;
   }
 
   return (
     <div className="mobile-container">
       {/* Top sticky header */}
-      <Header 
-        onOpenCloudConfig={() => setIsCloudConfigOpen(true)} 
-      />
+      <Header />
 
       {/* Main Tab Content */}
       <main style={{ flex: 1, width: '100%', position: 'relative' }}>
@@ -111,11 +102,6 @@ function AppContent() {
       <AddLoanModal
         isOpen={isAddLoanOpen}
         onClose={() => setIsAddLoanOpen(false)}
-      />
-
-      <CloudConfigModal 
-        isOpen={isCloudConfigOpen} 
-        onClose={() => setIsCloudConfigOpen(false)} 
       />
     </div>
   );

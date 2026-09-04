@@ -1,9 +1,4 @@
-import React from 'react';
-import { Cloud, CloudOff } from 'lucide-react';
-import { useApp } from '../context/AppContext';
-
-export const Header = ({ onOpenCloudConfig }) => {
-  const { isCloudConnected } = useApp();
+export const Header = () => {
 
   const currentMonthYear = new Intl.DateTimeFormat('en-US', {
     month: 'long',
@@ -39,27 +34,6 @@ export const Header = ({ onOpenCloudConfig }) => {
         <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em', marginTop: '2px' }}>
           SgHash Tracker <span style={{ fontSize: '0.75rem', color: '#818cf8', fontWeight: 600, background: 'rgba(99, 102, 241, 0.15)', padding: '2px 6px', borderRadius: '6px' }}>PRO</span>
         </h1>
-      </div>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <button 
-          onClick={onOpenCloudConfig}
-          className="btn-ghost"
-          style={{ padding: '7px 10px', fontSize: '0.75rem' }}
-          title={isCloudConnected ? "Supabase Connected" : "Connect Supabase"}
-        >
-          {isCloudConnected ? (
-            <>
-              <Cloud size={15} color="#10b981" />
-              <span style={{ color: '#10b981' }}>Cloud</span>
-            </>
-          ) : (
-            <>
-              <CloudOff size={15} color="#94a3b8" />
-              <span>Connect</span>
-            </>
-          )}
-        </button>
       </div>
     </header>
   );
