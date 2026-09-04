@@ -18,7 +18,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Setup Java
         uses: actions/setup-java@v5
@@ -26,11 +26,8 @@ jobs:
           distribution: 'zulu'
           java-version: '21'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Install NPM Dependencies
-        run: npm ci
+        run: npm install
 
       - name: Build Web Assets (Vite)
         run: npm run build
