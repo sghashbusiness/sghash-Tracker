@@ -7,6 +7,7 @@ import { AddExpenseModal } from './components/AddExpenseModal';
 import { TransferModal } from './components/TransferModal';
 import { CloudConfigModal } from './components/CloudConfigModal';
 import { ManageBanksModal } from './components/ManageBanksModal';
+import { AddLoanModal } from './components/AddLoanModal';
 import { LoginScreen } from './components/LoginScreen';
 import { HomeTab } from './tabs/HomeTab';
 import { BudgetTab } from './tabs/BudgetTab';
@@ -21,6 +22,7 @@ function AppContent() {
   const [isTransferOpen, setIsTransferOpen] = useState(false);
   const [isManageBanksOpen, setIsManageBanksOpen] = useState(false);
   const [isCloudConfigOpen, setIsCloudConfigOpen] = useState(false);
+  const [isAddLoanOpen, setIsAddLoanOpen] = useState(false);
 
   if (isAuthLoading) {
     return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-dark)' }}><span style={{ color: 'var(--text-muted)' }}>Loading...</span></div>;
@@ -52,7 +54,7 @@ function AppContent() {
           />
         )}
         {activeTab === 'loans' && (
-          <LoansTab />
+          <LoansTab onOpenAdd={() => setIsAddLoanOpen(true)} />
         )}
         {activeTab === 'cards' && (
           <CardsTab />
@@ -104,6 +106,11 @@ function AppContent() {
       <ManageBanksModal
         isOpen={isManageBanksOpen}
         onClose={() => setIsManageBanksOpen(false)}
+      />
+      
+      <AddLoanModal
+        isOpen={isAddLoanOpen}
+        onClose={() => setIsAddLoanOpen(false)}
       />
 
       <CloudConfigModal 

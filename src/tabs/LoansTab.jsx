@@ -8,7 +8,8 @@ import {
   Percent, 
   Calendar,
   Layers,
-  ArrowRight
+  ArrowRight,
+  Plus
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { 
@@ -17,7 +18,7 @@ import {
   generateAmortizationSchedule 
 } from '../utils/finance';
 
-export const LoansTab = () => {
+export const LoansTab = ({ onOpenAdd }) => {
   const { 
     loans, 
     totalPendingLoanAmount, 
@@ -36,14 +37,24 @@ export const LoansTab = () => {
     <div className="animate-fade-in" style={{ padding: '16px 20px 100px 20px' }}>
       
       {/* Title */}
-      <div style={{ marginBottom: '16px' }}>
-        <h2 className="title-md" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Landmark size={18} color="#818cf8" />
-          <span>Loan Metrics & Amortization</span>
-        </h2>
-        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-          True payoff costs, future interest burden, and tenure schedules
-        </p>
+      <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 className="title-md" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Landmark size={18} color="#818cf8" />
+            <span>Loan Metrics & Amortization</span>
+          </h2>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            True payoff costs, future interest burden, and tenure schedules
+          </p>
+        </div>
+        <button 
+          onClick={onOpenAdd}
+          className="btn-ghost" 
+          style={{ padding: '6px 12px', fontSize: '0.75rem', color: '#818cf8', borderColor: 'rgba(129, 140, 248, 0.3)' }}
+        >
+          <Plus size={14} />
+          <span>Add Loan</span>
+        </button>
       </div>
 
       {/* Aggregate Overview Card */}

@@ -64,8 +64,23 @@ export const AppProvider = ({ children }) => {
           })));
         }
         if (catRes.data) setCategories(catRes.data);
-        if (loanRes.data) setLoans(loanRes.data);
-        if (cardRes.data) setCards(cardRes.data);
+        if (loanRes.data) {
+          setLoans(loanRes.data.map(l => ({
+            ...l,
+            emi: l.emi_amount,
+            annualInterestRate: l.annual_interest_rate,
+            totalMonths: l.total_months,
+            monthsPaid: l.months_paid,
+            totalPrincipal: l.total_principal
+          })));
+        }
+        if (cardRes.data) {
+          setCards(cardRes.data.map(c => ({
+            ...c, 
+            unbilledBalance: c.unbilled_balance, 
+            statementBalance: c.statement_balance
+          })));
+        }
       } catch (err) {
         console.warn('Supabase fetch error:', err);
       }
@@ -221,6 +236,13 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  const deleteBankAccount = async (id) => {
+    setBankAccounts(prev => prev.filter(b => b.id !== id));
+    if (supabase && user) {
+      await supabase.from('bank_accounts').delete().eq('id', id);
+    }
+  };
+
   const addCategory = async (name, limit, type, icon) => {
     if (!supabase || !user) return;
     const { data, error } = await supabase.from('expense_limits')
@@ -265,7 +287,34 @@ export const AppProvider = ({ children }) => {
       .single();
     
     if (!error && data) {
-      setCards(prev => [...prev, data]);
+      setCards(prev => [...prev, { ...data, unbilledBalance: data.unbilled_balance, statementBalance: data.statement_balance }]);
+    }
+  };
+
+  const addLoan = async (name, principal, emi, interestRate, totalMonths) => {
+    if (!supabase || !user) return;
+    const { data, error } = await supabase.from('loans')
+      .insert([{ 
+        name, 
+        total_principal: Number(principal), 
+        emi_amount: Number(emi),
+        annual_interest_rate: Number(interestRate),
+        total_months: Number(totalMonths),
+        months_paid: 0,
+        user_id: user.id 
+      }])
+      .select()
+      .single();
+    
+    if (!error && data) {
+      setLoans(prev => [...prev, {
+        ...data,
+        emi: data.emi_amount,
+        annualInterestRate: data.annual_interest_rate,
+        totalMonths: data.total_months,
+        monthsPaid: data.months_paid,
+        totalPrincipal: data.total_principal
+      }]);
     }
   };
 
@@ -304,9 +353,10 @@ export const AppProvider = ({ children }) => {
       totalExpectedIncome, totalActualIncome, totalPlannedBudget, totalActualSpent,
       leftToSpendBalance, totalPendingLoanAmount, totalPendingPrincipal, totalFutureInterest,
       isCloudConnected,
-      addTransaction, transferFunds, addBankAccount, updateBankAccount,
+      addTransaction, transferFunds, addBankAccount, updateBankAccount, deleteBankAccount,
       addCategory, deleteCategory, updateCategoryLimit,
-      addCard, deleteCard, updateCardBalances
+      addCard, deleteCard, updateCardBalances,
+      addLoan
     }}>
       {children}
     </AppContext.Provider>

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { X, Building, Check, Plus, Edit2 } from 'lucide-react';
+import { X, Building, Check, Plus, Edit2, Trash2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export const ManageBanksModal = ({ isOpen, onClose }) => {
-  const { bankAccounts, addBankAccount, updateBankAccount } = useApp();
+  const { bankAccounts, addBankAccount, updateBankAccount, deleteBankAccount } = useApp();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editingBankId, setEditingBankId] = useState(null);
@@ -66,14 +66,36 @@ export const ManageBanksModal = ({ isOpen, onClose }) => {
           <>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px', maxHeight: '400px', overflowY: 'auto' }}>
               {bankAccounts.map(b => (
-                <div key={b.id} className="glass-card" style={{ padding: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid var(--border-subtle)' }}>
-                  <div>
-                    <div style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)' }}>{b.name}</div>
-                    <div style={{ fontSize: '0.85rem', color: '#f59e0b', fontWeight: 700 }}>₹{Number(b.balance).toLocaleString()}</div>
+                <div key={b.id} className="glass-card interactive-card" style={{ padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid var(--border-subtle)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{
+                      width: '36px', height: '36px', borderRadius: '10px',
+                      background: 'rgba(245, 158, 11, 0.15)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    }}>
+                      <Building size={18} color="#f59e0b" />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>{b.name}</div>
+                      <div style={{ fontSize: '0.85rem', color: '#f8fafc', fontWeight: 600 }}>₹{Number(b.balance).toLocaleString()}</div>
+                    </div>
                   </div>
-                  <button onClick={() => handleStartEdit(b)} className="btn-ghost" style={{ padding: '8px', color: 'var(--text-muted)' }}>
-                    <Edit2 size={16} />
-                  </button>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    <button onClick={() => handleStartEdit(b)} className="btn-ghost" style={{ padding: '6px', color: 'var(--text-muted)' }}>
+                      <Edit2 size={15} />
+                    </button>
+                    <button 
+                      onClick={() => {
+                        if(window.confirm('Delete this bank account?')) {
+                          deleteBankAccount(b.id);
+                        }
+                      }} 
+                      className="btn-ghost" 
+                      style={{ padding: '6px', color: '#f43f5e' }}
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

@@ -77,48 +77,9 @@ export const BudgetTab = ({ onOpenAdd }) => {
             Limits vs spending across outflows & investments
           </p>
         </div>
-
-        <button onClick={onOpenAdd} className="btn-ghost" style={{ padding: '6px 10px', fontSize: '0.78rem' }}>
-          <Plus size={14} />
-          <span>Expense</span>
-        </button>
       </div>
 
-      {/* Filter Tabs */}
-      <div style={{ 
-        display: 'flex', 
-        gap: '6px', 
-        background: 'rgba(15, 23, 42, 0.6)', 
-        padding: '4px', 
-        borderRadius: 'var(--radius-md)', 
-        marginBottom: '16px',
-        border: '1px solid var(--border-subtle)'
-      }}>
-        {[
-          { id: 'all', label: 'All Spends' },
-          { id: 'fixed_variable', label: 'Fixed & Variable' },
-          { id: 'discretionary', label: 'Discretionary & Invest' }
-        ].map(filter => (
-          <button
-            key={filter.id}
-            onClick={() => setActiveFilter(filter.id)}
-            style={{
-              flex: 1,
-              padding: '8px 4px',
-              fontSize: '0.72rem',
-              fontWeight: 700,
-              borderRadius: 'var(--radius-sm)',
-              border: 'none',
-              cursor: 'pointer',
-              background: activeFilter === filter.id ? 'rgba(56, 189, 248, 0.2)' : 'transparent',
-              color: activeFilter === filter.id ? '#38bdf8' : 'var(--text-muted)',
-              transition: 'all 0.2s'
-            }}
-          >
-            {filter.label}
-          </button>
-        ))}
-      </div>
+
 
       {/* Summary Mini Bar */}
       <div className="glass-card" style={{ marginBottom: '16px', padding: '12px 16px' }}>
@@ -215,14 +176,7 @@ export const BudgetTab = ({ onOpenAdd }) => {
                 {/* Edit Limit Action */}
                 <div style={{ textAlign: 'right' }}>
                   {isEditing ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <button 
-                        onClick={() => handleDelete(cat.id)}
-                        className="btn-ghost" 
-                        style={{ padding: '4px', border: 'none', color: '#f43f5e' }}
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'flex-end' }}>
                       <input 
                         type="number"
                         autoFocus
@@ -247,18 +201,32 @@ export const BudgetTab = ({ onOpenAdd }) => {
                       </button>
                     </div>
                   ) : (
-                    <div 
-                      onClick={() => {
-                        setEditingCatId(cat.id);
-                        setNewLimitVal(cat.limit);
-                      }}
-                      style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'flex-end' }}
-                    >
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Limit: </span>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
-                        {formatCurrency(cat.limit)}
-                      </span>
-                      <Edit2 size={11} color="#64748b" />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Limit: </span>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                          {formatCurrency(cat.limit)}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                        <button 
+                          onClick={() => {
+                            setEditingCatId(cat.id);
+                            setNewLimitVal(cat.limit);
+                          }}
+                          className="btn-ghost"
+                          style={{ padding: '4px', color: '#94a3b8' }}
+                        >
+                          <Edit2 size={13} />
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(cat.id)}
+                          className="btn-ghost" 
+                          style={{ padding: '4px', color: '#f43f5e' }}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
                     </div>
                   )}
                   <span style={{ 
