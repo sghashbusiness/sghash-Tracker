@@ -11,7 +11,7 @@ export const AddExpenseModal = ({ isOpen, onClose }) => {
   // By default select first bank account or Cash
   const [paymentMethod, setPaymentMethod] = useState(bankAccounts.length > 0 ? bankAccounts[0].name : 'Cash');
   const [selectedCardId, setSelectedCardId] = useState('');
-  const [selectedBankId, setSelectedBankId] = useState(bankAccounts.length > 0 ? bankAccounts[0].name : '');
+  const [selectedBankId, setSelectedBankId] = useState(bankAccounts.length > 0 ? bankAccounts[0].id : '');
   
   const [note, setNote] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -37,8 +37,8 @@ export const AddExpenseModal = ({ isOpen, onClose }) => {
     onClose();
   };
 
-  const handleSelectMethod = (method, type, id) => {
-    setPaymentMethod(method);
+  const handleSelectMethod = (methodName, type, id) => {
+    setPaymentMethod(methodName);
     if (type === 'card') {
       setSelectedCardId(id);
       setSelectedBankId('');
@@ -124,7 +124,7 @@ export const AddExpenseModal = ({ isOpen, onClose }) => {
                 <button
                   type="button"
                   key={b.id}
-                  onClick={() => handleSelectMethod(b.name, 'bank', b.name)}
+                  onClick={() => handleSelectMethod(b.name, 'bank', b.id)}
                   style={{
                     padding: '10px 4px',
                     borderRadius: 'var(--radius-md)',

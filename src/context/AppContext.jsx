@@ -109,7 +109,7 @@ export const AppProvider = ({ children }) => {
     // Deduct from bank account if specified (local)
     if (txData.bankAccountId) {
       setBankAccounts(prev => prev.map(b => 
-        (b.id === txData.bankAccountId || b.name === txData.bankAccountId) 
+        (b.id === txData.bankAccountId) 
           ? { ...b, balance: Number(b.balance) - amount } : b
       ));
     }
@@ -135,7 +135,7 @@ export const AppProvider = ({ children }) => {
         }
 
         // Sync bank balance to DB
-        const bank = bankAccounts.find(b => b.name === txData.bankAccountId);
+        const bank = bankAccounts.find(b => b.id === txData.bankAccountId);
         if (bank) {
           await supabase.from('bank_accounts')
             .update({ balance: Number(bank.balance) - amount })
@@ -221,6 +221,71 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  const addCategory = async (name, limit, type, icon) => {
+    if (!supabase || !user) return;
+    const { data, error } = await supabase.from('expense_limits')
+      .insert([{ name, limit: Number(limit), type, icon, spent: 0, user_id: user.id }])
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Failed to add category:', error);
+    }
+    
+    if (!error && data) {
+      setCategories(prev => [...prev, data]);
+    }
+  };
+
+  const deleteCategory = async (id) => {
+    setCategories(prev => prev.filter(c => c.id !== id));
+    if (supabase && user) {
+      await supabase.from('expense_limits').delete().eq('id', id);
+    }
+  };
+
+  const updateCategoryLimit = async (id, newLimit) => {
+    setCategories(prev => prev.map(c => c.id === id ? { ...c, limit: Number(newLimit) } : c));
+    if (supabase && user) {
+      await supabase.from('expense_limits').update({ limit: Number(newLimit) }).eq('id', id);
+    }
+  };
+
+  const addCard = async (name, type, statementBalance, unbilledBalance) => {
+    if (!supabase || !user) return;
+    const { data, error } = await supabase.from('credit_cards')
+      .insert([{ 
+        name, 
+        type, 
+        statement_balance: Number(statementBalance), 
+        unbilled_balance: Number(unbilledBalance),
+        user_id: user.id 
+      }])
+      .select()
+      .single();
+    
+    if (!error && data) {
+      setCards(prev => [...prev, data]);
+    }
+  };
+
+  const deleteCard = async (id) => {
+    setCards(prev => prev.filter(c => c.id !== id));
+    if (supabase && user) {
+      await supabase.from('credit_cards').delete().eq('id', id);
+    }
+  };
+
+  const updateCardBalances = async (id, unbilled, statement) => {
+    setCards(prev => prev.map(c => c.id === id ? { ...c, unbilledBalance: Number(unbilled), statementBalance: Number(statement) } : c));
+    if (supabase && user) {
+      await supabase.from('credit_cards').update({ 
+        unbilled_balance: Number(unbilled), 
+        statement_balance: Number(statement) 
+      }).eq('id', id);
+    }
+  };
+
   const signOut = async () => {
     if (supabase) {
       await supabase.auth.signOut();
@@ -239,7 +304,9 @@ export const AppProvider = ({ children }) => {
       totalExpectedIncome, totalActualIncome, totalPlannedBudget, totalActualSpent,
       leftToSpendBalance, totalPendingLoanAmount, totalPendingPrincipal, totalFutureInterest,
       isCloudConnected,
-      addTransaction, transferFunds, addBankAccount, updateBankAccount
+      addTransaction, transferFunds, addBankAccount, updateBankAccount,
+      addCategory, deleteCategory, updateCategoryLimit,
+      addCard, deleteCard, updateCardBalances
     }}>
       {children}
     </AppContext.Provider>

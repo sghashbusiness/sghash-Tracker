@@ -12,7 +12,7 @@ export const Header = ({ onOpenCloudConfig }) => {
 
   return (
     <header style={{
-      padding: '16px 20px 12px 20px',
+      padding: 'calc(env(safe-area-inset-top, 40px) + 16px) 20px 12px 20px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',

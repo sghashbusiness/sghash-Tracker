@@ -4,6 +4,7 @@ import { LogIn } from 'lucide-react';
 
 import { App } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
+import { Capacitor } from '@capacitor/core';
 
 export const LoginScreen = () => {
   React.useEffect(() => {
@@ -36,18 +37,31 @@ export const LoginScreen = () => {
 
   const handleGoogleLogin = async () => {
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: 'com.sgtracker.app://login-callback',
-          skipBrowserRedirect: true
+      const isNative = Capacitor.isNativePlatform();
+
+      if (isNative) {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: 'com.sgtracker.app://login-callback',
+            skipBrowserRedirect: true
+          }
+        });
+        
+        if (error) throw error;
+        
+        if (data?.url) {
+          await Browser.open({ url: data.url });
         }
-      });
-      
-      if (error) throw error;
-      
-      if (data?.url) {
-        await Browser.open({ url: data.url });
+      } else {
+        // Standard web login
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: window.location.origin
+          }
+        });
+        if (error) throw error;
       }
     } catch (error) {
       console.error('Error logging in with Google:', error.message);

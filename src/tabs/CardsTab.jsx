@@ -8,16 +8,20 @@ import {
   Edit3, 
   DollarSign,
   ShieldCheck,
-  Zap
+  Zap,
+  Plus,
+  Trash2
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { formatCurrency, calculateCardBillingInfo } from '../utils/finance';
+import { AddCardModal } from '../components/AddCardModal';
 
 export const CardsTab = () => {
-  const { cards, updateCardBalances } = useApp();
+  const { cards, updateCardBalances, deleteCard } = useApp();
   const [editingCardId, setEditingCardId] = useState(null);
   const [unbilledInput, setUnbilledInput] = useState('');
   const [statementInput, setStatementInput] = useState('');
+  const [isAddCardModalOpen, setIsAddCardModalOpen] = useState(false);
 
   const handleStartEdit = (card) => {
     setEditingCardId(card.id);
@@ -34,23 +38,44 @@ export const CardsTab = () => {
     updateCardBalances(cardId, cards.find(c => c.id === cardId)?.unbilledBalance || 0, 0);
   };
 
+  const handleDelete = (id) => {
+    if (window.confirm('Are you sure you want to delete this credit card?')) {
+      deleteCard(id);
+      setEditingCardId(null);
+    }
+  };
+
   return (
     <div className="animate-fade-in" style={{ padding: '16px 20px 100px 20px' }}>
       
       {/* Title */}
-      <div style={{ marginBottom: '16px' }}>
-        <h2 className="title-md" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <CreditCard size={18} color="#f59e0b" />
-          <span>Credit Card Billing Cycles</span>
-        </h2>
-        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-          Statement cutoff on the 14th, with exact payment due dates
-        </p>
+      <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 className="title-md" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <CreditCard size={18} color="#f59e0b" />
+            <span>Credit Card Billing Cycles</span>
+          </h2>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            Statement cutoff on the 14th, with exact payment due dates
+          </p>
+        </div>
+        <button 
+          onClick={() => setIsAddCardModalOpen(true)}
+          className="btn-ghost" 
+          style={{ padding: '6px 12px', fontSize: '0.75rem', color: '#f59e0b', borderColor: 'rgba(245, 158, 11, 0.3)' }}
+        >
+          <Plus size={14} />
+          <span>Add Card</span>
+        </button>
       </div>
 
       {/* Cards Display */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        {cards.map(card => {
+        {cards.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
+            <p style={{ fontSize: '0.85rem' }}>No credit cards added yet.</p>
+          </div>
+        ) : cards.map(card => {
           const billing = calculateCardBillingInfo(card);
           const isAxis = card.type === 'Axis';
           const isEditing = editingCardId === card.id;
@@ -169,13 +194,22 @@ export const CardsTab = () => {
               {/* Actions */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '4px' }}>
                 {isEditing ? (
-                  <button 
-                    onClick={() => handleSaveBalances(card.id)}
-                    className="btn-primary btn-emerald"
-                    style={{ padding: '6px 14px', fontSize: '0.75rem' }}
-                  >
-                    Save Balances
-                  </button>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button 
+                      onClick={() => handleSaveBalances(card.id)}
+                      className="btn-primary btn-emerald"
+                      style={{ padding: '6px 14px', fontSize: '0.75rem' }}
+                    >
+                      Save
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(card.id)}
+                      className="btn-ghost"
+                      style={{ padding: '6px 10px', fontSize: '0.75rem', color: '#f43f5e', border: 'none' }}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 ) : (
                   <button 
                     onClick={() => handleStartEdit(card)}
@@ -219,6 +253,7 @@ export const CardsTab = () => {
         </ul>
       </div>
 
+      <AddCardModal isOpen={isAddCardModalOpen} onClose={() => setIsAddCardModalOpen(false)} />
     </div>
   );
 };

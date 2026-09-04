@@ -13,10 +13,12 @@ import {
   TrendingUp,
   Edit2,
   Check,
-  Plus
+  Plus,
+  Trash2
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { formatCurrency } from '../utils/finance';
+import { AddCategoryModal } from '../components/AddCategoryModal';
 
 const ICON_MAP = {
   Home,
@@ -32,10 +34,11 @@ const ICON_MAP = {
 };
 
 export const BudgetTab = ({ onOpenAdd }) => {
-  const { categories, updateCategoryLimit } = useApp();
+  const { categories, updateCategoryLimit, deleteCategory } = useApp();
   const [activeFilter, setActiveFilter] = useState('all');
   const [editingCatId, setEditingCatId] = useState(null);
   const [newLimitVal, setNewLimitVal] = useState('');
+  const [isAddCatModalOpen, setIsAddCatModalOpen] = useState(false);
 
   const filteredCategories = categories.filter(c => {
     if (activeFilter === 'fixed_variable') return c.type === 'Fixed' || c.type === 'Variable';
@@ -51,6 +54,13 @@ export const BudgetTab = ({ onOpenAdd }) => {
       updateCategoryLimit(id, Number(newLimitVal));
     }
     setEditingCatId(null);
+  };
+
+  const handleDelete = (id) => {
+    if (window.confirm('Are you sure you want to delete this category?')) {
+      deleteCategory(id);
+      setEditingCatId(null);
+    }
   };
 
   return (
@@ -132,9 +142,25 @@ export const BudgetTab = ({ onOpenAdd }) => {
         </div>
       </div>
 
+      {/* Manage/Add Categories Button */}
+      <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'flex-end' }}>
+        <button 
+          onClick={() => setIsAddCatModalOpen(true)}
+          className="btn-ghost" 
+          style={{ padding: '6px 12px', fontSize: '0.75rem', color: '#38bdf8', borderColor: 'rgba(56, 189, 248, 0.3)' }}
+        >
+          <Plus size={14} />
+          <span>Add Category</span>
+        </button>
+      </div>
+
       {/* Categories List */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        {filteredCategories.map(cat => {
+        {filteredCategories.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
+            <p style={{ fontSize: '0.85rem' }}>No categories found in this filter.</p>
+          </div>
+        ) : filteredCategories.map(cat => {
           const Icon = ICON_MAP[cat.icon] || PieChart;
           const pct = Math.round((cat.spent / (cat.limit || 1)) * 100);
           const isOver = cat.spent > cat.limit;
@@ -190,13 +216,20 @@ export const BudgetTab = ({ onOpenAdd }) => {
                 <div style={{ textAlign: 'right' }}>
                   {isEditing ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <button 
+                        onClick={() => handleDelete(cat.id)}
+                        className="btn-ghost" 
+                        style={{ padding: '4px', border: 'none', color: '#f43f5e' }}
+                      >
+                        <Trash2 size={14} />
+                      </button>
                       <input 
                         type="number"
                         autoFocus
                         value={newLimitVal}
                         onChange={e => setNewLimitVal(e.target.value)}
                         style={{
-                          width: '80px',
+                          width: '70px',
                           background: 'rgba(0,0,0,0.5)',
                           border: '1px solid #38bdf8',
                           borderRadius: '4px',
@@ -260,6 +293,7 @@ export const BudgetTab = ({ onOpenAdd }) => {
         })}
       </div>
 
+      <AddCategoryModal isOpen={isAddCatModalOpen} onClose={() => setIsAddCatModalOpen(false)} />
     </div>
   );
 };

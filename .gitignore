@@ -24,3 +24,7 @@ dist-ssr
 *.sw?
 *.zip
 *-APK/
+*.apk
+playwright-report/
+test-results/
+.agents/
