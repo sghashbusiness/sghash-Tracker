@@ -1,67 +1,20 @@
-import React, { useState } from 'react';
-import { 
-  PieChart, 
-  Home, 
-  ShoppingBag, 
-  Fuel, 
-  Train, 
-  Landmark, 
-  Coffee, 
-  Gift, 
-  CreditCard, 
-  PiggyBank, 
-  TrendingUp,
-  Edit2,
-  Check,
-  Plus,
-  Trash2
-} from 'lucide-react';
+import React from 'react';
+import { PieChart, Folder } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { formatCurrency } from '../utils/finance';
-import { AddCategoryModal } from '../components/AddCategoryModal';
 
-const ICON_MAP = {
-  Home,
-  ShoppingBag,
-  Fuel,
-  Train,
-  Landmark,
-  Coffee,
-  Gift,
-  CreditCard,
-  PiggyBank,
-  TrendingUp
-};
+export const BudgetTab = () => {
+  const { budgets, categories, transactions } = useApp();
 
-export const BudgetTab = ({ onOpenAdd }) => {
-  const { categories, updateCategoryLimit, deleteCategory } = useApp();
-  const [activeFilter, setActiveFilter] = useState('all');
-  const [editingCatId, setEditingCatId] = useState(null);
-  const [newLimitVal, setNewLimitVal] = useState('');
-  const [isAddCatModalOpen, setIsAddCatModalOpen] = useState(false);
+  const expenseCategories = categories.filter(c => c.type === 'Expense');
 
-  const filteredCategories = categories.filter(c => {
-    if (activeFilter === 'fixed_variable') return c.type === 'Fixed' || c.type === 'Variable';
-    if (activeFilter === 'discretionary') return c.type === 'Discretionary' || c.type === 'Investment';
-    return true;
-  });
-
-  const totalLimit = filteredCategories.reduce((acc, c) => acc + Number(c.limit), 0);
-  const totalSpent = filteredCategories.reduce((acc, c) => acc + Number(c.spent), 0);
-
-  const handleSaveLimit = (id) => {
-    if (newLimitVal !== '') {
-      updateCategoryLimit(id, Number(newLimitVal));
-    }
-    setEditingCatId(null);
+  const calculateSpent = (catName) => {
+    return transactions
+      .filter(t => t.type === 'Expense' && t.category === catName)
+      .reduce((acc, t) => acc + Number(t.amount), 0);
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this category?')) {
-      deleteCategory(id);
-      setEditingCatId(null);
-    }
-  };
+  const totalSpent = expenseCategories.reduce((acc, c) => acc + calculateSpent(c.name), 0);
 
   return (
     <div className="animate-fade-in" style={{ padding: '16px 20px 100px 20px' }}>
@@ -71,197 +24,88 @@ export const BudgetTab = ({ onOpenAdd }) => {
         <div>
           <h2 className="title-md" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <PieChart size={18} color="#38bdf8" />
-            <span>Planned vs. Actual</span>
+            <span>Categories Breakdown</span>
           </h2>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            Limits vs spending across outflows & investments
+            Track where your money goes by Budget
           </p>
         </div>
       </div>
 
-
-
       {/* Summary Mini Bar */}
-      <div className="glass-card" style={{ marginBottom: '16px', padding: '12px 16px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '8px' }}>
-          <div>
-            <span style={{ color: 'var(--text-muted)' }}>Spent: </span>
-            <span style={{ fontWeight: 700, color: '#f8fafc' }}>{formatCurrency(totalSpent)}</span>
-          </div>
-          <div>
-            <span style={{ color: 'var(--text-muted)' }}>Limit: </span>
-            <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>{formatCurrency(totalLimit)}</span>
-          </div>
-        </div>
-        <div className="progress-bar-container">
-          <div 
-            className={`progress-bar-fill ${
-              totalSpent > totalLimit ? 'progress-fill-rose' : (totalSpent / totalLimit) > 0.8 ? 'progress-fill-amber' : 'progress-fill-emerald'
-            }`}
-            style={{ width: `${Math.min(100, (totalSpent / (totalLimit || 1)) * 100)}%` }}
-          />
-        </div>
+      <div className="glass-card" style={{ marginBottom: '24px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Total Spending</span>
+        <span style={{ fontWeight: 800, color: '#f8fafc', fontSize: '1.2rem' }}>{formatCurrency(totalSpent)}</span>
       </div>
 
-      {/* Manage/Add Categories Button */}
-      <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'flex-end' }}>
-        <button 
-          onClick={() => setIsAddCatModalOpen(true)}
-          className="btn-ghost" 
-          style={{ padding: '6px 12px', fontSize: '0.75rem', color: '#38bdf8', borderColor: 'rgba(56, 189, 248, 0.3)' }}
-        >
-          <Plus size={14} />
-          <span>Add Category</span>
-        </button>
-      </div>
-
-      {/* Categories List */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        {filteredCategories.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
-            <p style={{ fontSize: '0.85rem' }}>No categories found in this filter.</p>
-          </div>
-        ) : filteredCategories.map(cat => {
-          const Icon = ICON_MAP[cat.icon] || PieChart;
-          const pct = Math.round((cat.spent / (cat.limit || 1)) * 100);
-          const isOver = cat.spent > cat.limit;
-          const remaining = cat.limit - cat.spent;
-          const isEditing = editingCatId === cat.id;
+      {/* Grouped by Budgets */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        {budgets.map(budget => {
+          const budgetCategories = expenseCategories.filter(c => c.budgetId === budget.id);
+          
+          if (budgetCategories.length === 0) return null;
 
           return (
-            <div 
-              key={cat.id} 
-              className="glass-card interactive-card"
-              style={{
-                padding: '14px 16px',
-                border: isOver ? '1px solid rgba(244, 63, 94, 0.3)' : '1px solid var(--border-subtle)'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '10px',
-                    background: cat.type === 'Fixed' || cat.type === 'Variable' 
-                      ? 'rgba(99, 102, 241, 0.15)' 
-                      : cat.type === 'Investment' 
-                        ? 'rgba(16, 185, 129, 0.15)' 
-                        : 'rgba(245, 158, 11, 0.15)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>
-                    <Icon 
-                      size={18} 
-                      color={
-                        cat.type === 'Fixed' || cat.type === 'Variable' 
-                          ? '#818cf8' 
-                          : cat.type === 'Investment' 
-                            ? '#34d399' 
-                            : '#fcd34d'
-                      } 
-                    />
-                  </div>
-                  <div>
-                    <h3 style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                      {cat.name}
-                    </h3>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                      {cat.type} Outflow
-                    </span>
-                  </div>
-                </div>
+            <div key={budget.id}>
+              <h3 style={{ fontSize: '0.9rem', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
+                <Folder size={16} />
+                {budget.name} Budget (Limit: {formatCurrency(budget.limit)})
+              </h3>
 
-                {/* Edit Limit Action */}
-                <div style={{ textAlign: 'right' }}>
-                  {isEditing ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'flex-end' }}>
-                      <input 
-                        type="number"
-                        autoFocus
-                        value={newLimitVal}
-                        onChange={e => setNewLimitVal(e.target.value)}
-                        style={{
-                          width: '70px',
-                          background: 'rgba(0,0,0,0.5)',
-                          border: '1px solid #38bdf8',
-                          borderRadius: '4px',
-                          color: 'white',
-                          padding: '2px 4px',
-                          fontSize: '0.85rem'
-                        }}
-                      />
-                      <button 
-                        onClick={() => handleSaveLimit(cat.id)}
-                        className="btn-ghost" 
-                        style={{ padding: '4px' }}
-                      >
-                        <Check size={14} color="#10b981" />
-                      </button>
-                    </div>
-                  ) : (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Limit: </span>
-                        <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
-                          {formatCurrency(cat.limit)}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {budgetCategories.map(cat => {
+                  const spent = calculateSpent(cat.name);
+                  return (
+                    <div 
+                      key={cat.id} 
+                      className="glass-card interactive-card"
+                      style={{
+                        padding: '12px 14px',
+                        border: '1px solid var(--border-subtle)',
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '8px',
+                          background: 'rgba(56, 189, 248, 0.1)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}>
+                          <PieChart size={16} color="#38bdf8" />
+                        </div>
+                        <div>
+                          <h3 style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                            {cat.name}
+                          </h3>
+                        </div>
+                      </div>
+
+                      <div style={{ textAlign: 'right' }}>
+                        <span style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                          {formatCurrency(spent)}
                         </span>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                        <button 
-                          onClick={() => {
-                            setEditingCatId(cat.id);
-                            setNewLimitVal(cat.limit);
-                          }}
-                          className="btn-ghost"
-                          style={{ padding: '4px', color: '#94a3b8' }}
-                        >
-                          <Edit2 size={13} />
-                        </button>
-                        <button 
-                          onClick={() => handleDelete(cat.id)}
-                          className="btn-ghost" 
-                          style={{ padding: '4px', color: '#f43f5e' }}
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
                     </div>
-                  )}
-                  <span style={{ 
-                    fontSize: '0.7rem', 
-                    fontWeight: 600, 
-                    color: isOver ? '#fb7185' : 'var(--accent-emerald)', 
-                    display: 'block',
-                    marginTop: '2px'
-                  }}>
-                    {isOver ? `Over by ${formatCurrency(Math.abs(remaining))}` : `${formatCurrency(remaining)} left`}
-                  </span>
-                </div>
-              </div>
-
-              {/* Progress Bar & Actual */}
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '6px' }}>
-                  <span style={{ color: 'var(--text-secondary)' }}>Actual: <strong>{formatCurrency(cat.spent)}</strong></span>
-                  <span style={{ color: isOver ? '#fb7185' : 'var(--text-muted)', fontWeight: 600 }}>{pct}%</span>
-                </div>
-                <div className="progress-bar-container">
-                  <div 
-                    className={`progress-bar-fill ${
-                      isOver ? 'progress-fill-rose' : pct > 80 ? 'progress-fill-amber' : 'progress-fill-emerald'
-                    }`}
-                    style={{ width: `${Math.min(100, pct)}%` }}
-                  />
-                </div>
+                  );
+                })}
               </div>
             </div>
           );
         })}
+
+        {budgets.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
+            <p style={{ fontSize: '0.85rem' }}>No budgets configured.</p>
+          </div>
+        )}
       </div>
 
-      <AddCategoryModal isOpen={isAddCatModalOpen} onClose={() => setIsAddCatModalOpen(false)} />
     </div>
   );
 };

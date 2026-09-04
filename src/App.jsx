@@ -4,19 +4,25 @@ import { AppProvider, useApp } from './context/AppContext';
 import { Header } from './components/Header';
 import { Navigation } from './components/Navigation';
 import { AddExpenseModal } from './components/AddExpenseModal';
+import { AddIncomeModal } from './components/AddIncomeModal';
+import { ActionMenuModal } from './components/ActionMenuModal';
+import { SettingsModal } from './components/SettingsModal';
 import { TransferModal } from './components/TransferModal';
 import { ManageBanksModal } from './components/ManageBanksModal';
 import { AddLoanModal } from './components/AddLoanModal';
 import { HomeTab } from './tabs/HomeTab';
 import { BudgetTab } from './tabs/BudgetTab';
 import { LoansTab } from './tabs/LoansTab';
-import { CardsTab } from './tabs/CardsTab';
+import { BanksTab } from './tabs/BanksTab';
 
 function AppContent() {
   const { isDataLoaded } = useApp();
 
   const [activeTab, setActiveTab] = useState('home');
-  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
+  const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
+  const [isAddIncomeOpen, setIsAddIncomeOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isTransferOpen, setIsTransferOpen] = useState(false);
   const [isManageBanksOpen, setIsManageBanksOpen] = useState(false);
   const [isAddLoanOpen, setIsAddLoanOpen] = useState(false);
@@ -28,14 +34,12 @@ function AppContent() {
   return (
     <div className="mobile-container">
       {/* Top sticky header */}
-      <Header />
+      <Header onOpenSettings={() => setIsSettingsOpen(true)} />
 
       {/* Main Tab Content */}
-      <main style={{ flex: 1, width: '100%', position: 'relative' }}>
+      <main style={{ flex: '1 1 0', width: '100%', position: 'relative', overflowY: 'auto', overflowX: 'hidden', minHeight: 0 }}>
         {activeTab === 'home' && (
           <HomeTab 
-            onOpenTransfer={() => setIsTransferOpen(true)}
-            onOpenManageBanks={() => setIsManageBanksOpen(true)}
             setActiveTab={setActiveTab} 
           />
         )}
@@ -47,15 +51,18 @@ function AppContent() {
         {activeTab === 'loans' && (
           <LoansTab onOpenAdd={() => setIsAddLoanOpen(true)} />
         )}
-        {activeTab === 'cards' && (
-          <CardsTab />
+        {activeTab === 'banks' && (
+          <BanksTab 
+            onOpenTransfer={() => setIsTransferOpen(true)}
+            onOpenManageBanks={() => setIsManageBanksOpen(true)}
+          />
         )}
       </main>
 
       {/* Floating Action Button (FAB) */}
       {activeTab === 'home' && (
         <button
-          onClick={() => setIsAddOpen(true)}
+          onClick={() => setIsActionMenuOpen(true)}
           className="btn-primary"
           style={{
             position: 'fixed',
@@ -84,9 +91,27 @@ function AppContent() {
       />
 
       {/* Modals */}
+      <ActionMenuModal 
+        isOpen={isActionMenuOpen}
+        onClose={() => setIsActionMenuOpen(false)}
+        onOpenExpense={() => setIsAddExpenseOpen(true)}
+        onOpenIncome={() => setIsAddIncomeOpen(true)}
+        onOpenTransfer={() => setIsTransferOpen(true)}
+      />
+
       <AddExpenseModal 
-        isOpen={isAddOpen} 
-        onClose={() => setIsAddOpen(false)} 
+        isOpen={isAddExpenseOpen} 
+        onClose={() => setIsAddExpenseOpen(false)} 
+      />
+
+      <AddIncomeModal
+        isOpen={isAddIncomeOpen}
+        onClose={() => setIsAddIncomeOpen(false)}
+      />
+      
+      <SettingsModal 
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
       />
       
       <TransferModal 

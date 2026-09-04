@@ -3,17 +3,15 @@ import { X, Check } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { CustomSelect } from './ui/CustomSelect';
 
-export const AddExpenseModal = ({ isOpen, onClose }) => {
-  const { categories, budgets, cards, bankAccounts, addTransaction } = useApp();
+export const AddIncomeModal = ({ isOpen, onClose }) => {
+  const { categories, bankAccounts, addIncome } = useApp();
 
   const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState(categories.length > 0 ? categories[0].name : '');
   
-  // By default select first bank account or Cash
-  const [paymentMethod, setPaymentMethod] = useState(bankAccounts.length > 0 ? bankAccounts[0].name : 'Cash');
-  const [selectedCardId, setSelectedCardId] = useState('');
+  const incomeCategories = categories.filter(c => c.type === 'Income');
+  const [category, setCategory] = useState(incomeCategories.length > 0 ? incomeCategories[0].name : 'General Income');
+  
   const [selectedBankId, setSelectedBankId] = useState(bankAccounts.length > 0 ? bankAccounts[0].id : '');
-  
   const [note, setNote] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
 
@@ -23,11 +21,9 @@ export const AddExpenseModal = ({ isOpen, onClose }) => {
     e.preventDefault();
     if (!amount || Number(amount) <= 0) return;
 
-    addTransaction({
+    addIncome({
       amount: Number(amount),
       category,
-      paymentMethod,
-      cardId: selectedCardId || null,
       bankAccountId: selectedBankId || null,
       note,
       date
@@ -38,27 +34,13 @@ export const AddExpenseModal = ({ isOpen, onClose }) => {
     onClose();
   };
 
-  const handleSelectMethod = (methodName, type, id) => {
-    setPaymentMethod(methodName);
-    if (type === 'card') {
-      setSelectedCardId(id);
-      setSelectedBankId('');
-    } else if (type === 'bank') {
-      setSelectedBankId(id);
-      setSelectedCardId('');
-    } else {
-      setSelectedCardId('');
-      setSelectedBankId('');
-    }
-  };
-
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal-content" onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <div>
-            <h2 className="title-md">Log Expense</h2>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Deducts dynamically from your budget</p>
+            <h2 className="title-md">Log Income</h2>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Adds directly to your balance</p>
           </div>
           <button onClick={onClose} className="btn-ghost" style={{ padding: '6px', borderRadius: '50%' }}>
             <X size={18} />
@@ -97,47 +79,34 @@ export const AddExpenseModal = ({ isOpen, onClose }) => {
 
           {/* Category */}
           <div className="form-group">
-            <label className="form-label">Expense Category</label>
+            <label className="form-label">Income Source / Category</label>
             <CustomSelect 
               value={category} 
               onChange={setCategory}
-              placeholder="Select Category..."
-              options={[
-                ...budgets.map(b => {
-                  const budgetCats = categories.filter(c => c.budgetId === b.id && (c.type === 'Expense' || !c.type || c.type !== 'Income'));
-                  if (budgetCats.length === 0) return null;
-                  return {
-                    label: `${b.name} Budget`,
-                    options: budgetCats.map(c => ({ value: c.name, label: c.name }))
-                  };
-                }).filter(Boolean),
-                {
-                  label: "Other Categories",
-                  options: categories.filter(c => !c.budgetId && (c.type === 'Expense' || !c.type || c.type !== 'Income')).map(c => ({
-                    value: c.name,
-                    label: c.name
-                  }))
-                }
-              ].filter(group => group.options && group.options.length > 0)}
+              placeholder="Select Income Source..."
+              options={
+                incomeCategories.length > 0 
+                  ? incomeCategories.map(c => ({ value: c.name, label: c.name }))
+                  : [{ value: 'General Income', label: 'General Income' }]
+              }
             />
           </div>
 
-          {/* Payment Method / Bank Account */}
+          {/* Bank Account */}
           <div className="form-group">
-            <label className="form-label">Deduct From</label>
+            <label className="form-label">Deposit Into</label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
-              {/* Bank Accounts */}
               {bankAccounts.map(b => (
                 <button
                   type="button"
                   key={b.id}
-                  onClick={() => handleSelectMethod(b.name, 'bank', b.id)}
+                  onClick={() => setSelectedBankId(b.id)}
                   style={{
                     padding: '10px 4px',
                     borderRadius: 'var(--radius-md)',
-                    border: paymentMethod === b.name ? '1px solid #38bdf8' : '1px solid var(--border-subtle)',
-                    background: paymentMethod === b.name ? 'rgba(56, 189, 248, 0.15)' : 'rgba(255, 255, 255, 0.04)',
-                    color: paymentMethod === b.name ? '#38bdf8' : 'var(--text-secondary)',
+                    border: selectedBankId === b.id ? '1px solid #10b981' : '1px solid var(--border-subtle)',
+                    background: selectedBankId === b.id ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255, 255, 255, 0.04)',
+                    color: selectedBankId === b.id ? '#10b981' : 'var(--text-secondary)',
                     fontSize: '0.8rem',
                     fontWeight: 600,
                     cursor: 'pointer'
@@ -146,51 +115,31 @@ export const AddExpenseModal = ({ isOpen, onClose }) => {
                   {b.name}
                 </button>
               ))}
-              {/* Cards & Others */}
-              {cards.map(c => (
-                <button
-                  type="button"
-                  key={c.id}
-                  onClick={() => handleSelectMethod(c.name, 'card', c.id)}
-                  style={{
-                    padding: '10px 4px',
-                    borderRadius: 'var(--radius-md)',
-                    border: paymentMethod === c.name ? '1px solid #f59e0b' : '1px solid var(--border-subtle)',
-                    background: paymentMethod === c.name ? 'rgba(245, 158, 11, 0.15)' : 'rgba(255, 255, 255, 0.04)',
-                    color: paymentMethod === c.name ? '#f59e0b' : 'var(--text-secondary)',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    cursor: 'pointer'
-                  }}
-                >
-                  {c.name}
-                </button>
-              ))}
               <button
                 type="button"
-                onClick={() => handleSelectMethod('Cash', 'cash')}
+                onClick={() => setSelectedBankId('')}
                 style={{
                   padding: '10px 4px',
                   borderRadius: 'var(--radius-md)',
-                  border: paymentMethod === 'Cash' ? '1px solid #10b981' : '1px solid var(--border-subtle)',
-                  background: paymentMethod === 'Cash' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255, 255, 255, 0.04)',
-                  color: paymentMethod === 'Cash' ? '#10b981' : 'var(--text-secondary)',
+                  border: selectedBankId === '' ? '1px solid #38bdf8' : '1px solid var(--border-subtle)',
+                  background: selectedBankId === '' ? 'rgba(56, 189, 248, 0.15)' : 'rgba(255, 255, 255, 0.04)',
+                  color: selectedBankId === '' ? '#38bdf8' : 'var(--text-secondary)',
                   fontSize: '0.8rem',
                   fontWeight: 600,
                   cursor: 'pointer'
                 }}
               >
-                Cash
+                Cash (Not tracked in bank)
               </button>
             </div>
           </div>
 
           {/* Note */}
           <div className="form-group">
-            <label className="form-label">Note / Merchant</label>
+            <label className="form-label">Note / Reference</label>
             <input
               type="text"
-              placeholder="e.g. Swiggy, Petrol pump, Grocery"
+              placeholder="e.g. Salary, Freelance, Refund"
               value={note}
               onChange={e => setNote(e.target.value)}
               className="form-input"
@@ -211,10 +160,10 @@ export const AddExpenseModal = ({ isOpen, onClose }) => {
           <button 
             type="submit" 
             className="btn-primary" 
-            style={{ width: '100%', marginTop: '16px', padding: '14px' }}
+            style={{ width: '100%', marginTop: '16px', padding: '14px', background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)' }}
           >
             <Check size={18} />
-            <span>Save Expense</span>
+            <span>Save Income</span>
           </button>
         </form>
       </div>

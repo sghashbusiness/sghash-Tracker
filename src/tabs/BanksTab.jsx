@@ -1,23 +1,21 @@
 import React, { useState } from 'react';
 import { 
   CreditCard, 
-  Calendar, 
+  Building,
   Clock, 
-  AlertTriangle, 
   CheckCircle, 
   Edit3, 
-  DollarSign,
-  ShieldCheck,
   Zap,
   Plus,
-  Trash2
+  Trash2,
+  ArrowRightLeft
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { formatCurrency, calculateCardBillingInfo } from '../utils/finance';
 import { AddCardModal } from '../components/AddCardModal';
 
-export const CardsTab = () => {
-  const { cards, updateCardBalances, deleteCard } = useApp();
+export const BanksTab = ({ onOpenTransfer, onOpenManageBanks }) => {
+  const { bankAccounts, cards, updateCardBalances, deleteCard } = useApp();
   const [editingCardId, setEditingCardId] = useState(null);
   const [unbilledInput, setUnbilledInput] = useState('');
   const [statementInput, setStatementInput] = useState('');
@@ -48,15 +46,59 @@ export const CardsTab = () => {
   return (
     <div className="animate-fade-in" style={{ padding: '16px 20px 100px 20px' }}>
       
-      {/* Title */}
+      {/* 1. BANK ACCOUNTS */}
+      <div style={{ marginBottom: '32px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h2 className="title-md" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-primary)' }}>
+            <Building size={18} color="#10b981" />
+            <span>Bank Accounts</span>
+          </h2>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button 
+              onClick={onOpenManageBanks}
+              className="btn-ghost" 
+              style={{ fontSize: '0.75rem', padding: '6px 12px', color: '#f8fafc', borderColor: 'rgba(255,255,255,0.1)' }}
+            >
+              Manage
+            </button>
+            <button 
+              onClick={onOpenTransfer}
+              className="btn-primary" 
+              style={{ fontSize: '0.75rem', padding: '6px 12px', background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', boxShadow: 'none' }}
+            >
+              <ArrowRightLeft size={12} />
+              <span>Transfer</span>
+            </button>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {bankAccounts.length === 0 ? (
+            <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', border: '1px dashed var(--border-subtle)', borderRadius: '12px' }}>
+              No bank accounts added yet. <br/><span style={{ color: '#38bdf8', cursor: 'pointer' }} onClick={onOpenManageBanks}>Add one now</span>
+            </div>
+          ) : (
+            bankAccounts.map(bank => (
+              <div key={bank.id} className="glass-card" style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid rgba(16, 185, 129, 0.2)', background: 'rgba(16, 185, 129, 0.05)' }}>
+                <span style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>{bank.name}</span>
+                <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#f8fafc' }}>
+                  {formatCurrency(bank.balance)}
+                </span>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* 2. CREDIT CARDS */}
       <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h2 className="title-md" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <h2 className="title-md" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-primary)' }}>
             <CreditCard size={18} color="#f59e0b" />
-            <span>Credit Card Billing Cycles</span>
+            <span>Credit Cards</span>
           </h2>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            Statement cutoff on the 14th, with exact payment due dates
+            Track billing cycles and statements
           </p>
         </div>
         <button 
@@ -79,7 +121,6 @@ export const CardsTab = () => {
           const billing = calculateCardBillingInfo(card);
           const isAxis = card.type === 'Axis';
           const isEditing = editingCardId === card.id;
-
           const isDueUrgent = billing.daysUntilDue <= 3;
 
           return (
@@ -94,7 +135,6 @@ export const CardsTab = () => {
                 padding: '18px'
               }}
             >
-              {/* Card Brand Header */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -121,14 +161,12 @@ export const CardsTab = () => {
                   </span>
                 </div>
 
-                {/* Due Date Alert Badge */}
                 <span className={`badge ${isDueUrgent ? 'badge-rose' : 'badge-amber'}`}>
                   <Clock size={11} />
                   {billing.daysUntilDue > 0 ? `${billing.daysUntilDue} days left` : 'Due Today'}
                 </span>
               </div>
 
-              {/* Balances Split Grid */}
               <div style={{ 
                 display: 'grid', 
                 gridTemplateColumns: '1fr 1fr', 
@@ -138,7 +176,6 @@ export const CardsTab = () => {
                 borderRadius: 'var(--radius-md)',
                 marginBottom: '14px'
               }}>
-                {/* Statement Balance (Locked on 14th) */}
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
                     <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)' }}>
@@ -165,7 +202,6 @@ export const CardsTab = () => {
                   </span>
                 </div>
 
-                {/* Unbilled Balance (Current Cycle) */}
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
                     <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)' }}>
@@ -191,7 +227,6 @@ export const CardsTab = () => {
                 </div>
               </div>
 
-              {/* Actions */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '4px' }}>
                 {isEditing ? (
                   <div style={{ display: 'flex', gap: '8px' }}>
@@ -239,18 +274,6 @@ export const CardsTab = () => {
             </div>
           );
         })}
-      </div>
-
-      {/* Cycle Explainer Note */}
-      <div className="glass-card" style={{ marginTop: '20px', padding: '14px', background: 'rgba(15, 23, 42, 0.4)' }}>
-        <h4 style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
-          Rule Logic
-        </h4>
-        <ul style={{ fontSize: '0.72rem', color: 'var(--text-muted)', paddingLeft: '16px', lineHeight: 1.6 }}>
-          <li><strong>14th Cutoff</strong>: Unbilled cycle transactions automatically freeze into the Statement Balance on the 14th.</li>
-          <li><strong>Axis Flipkart</strong>: Always due on the <strong>2nd of the upcoming month</strong>.</li>
-          <li><strong>UNI Cards</strong>: Due exactly <strong>17 days</strong> after statement generation.</li>
-        </ul>
       </div>
 
       <AddCardModal isOpen={isAddCardModalOpen} onClose={() => setIsAddCardModalOpen(false)} />

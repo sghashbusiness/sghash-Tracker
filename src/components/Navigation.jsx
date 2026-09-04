@@ -5,8 +5,8 @@ export const Navigation = ({ activeTab, setActiveTab }) => {
   const tabs = [
     { id: 'home', label: 'Overview', icon: LayoutDashboard },
     { id: 'budget', label: 'Budget', icon: PieChart },
-    { id: 'loans', label: 'Loans', icon: Landmark },
-    { id: 'cards', label: 'Cards', icon: CreditCard },
+    { id: 'loans', label: 'Loans', icon: CreditCard },
+    { id: 'banks', label: 'Banks', icon: Landmark },
   ];
 
   return (

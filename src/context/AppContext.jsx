@@ -8,6 +8,7 @@ export const AppProvider = ({ children }) => {
 
   // Core Data States (Empty by default)
   const [incomePool, setIncomePool] = useState([]);
+  const [budgets, setBudgets] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loans, setLoans] = useState([]);
   const [cards, setCards] = useState([]);
@@ -19,12 +20,14 @@ export const AppProvider = ({ children }) => {
     try {
       const storedBanks = JSON.parse(localStorage.getItem('sg_bankAccounts') || '[]');
       const storedTx = JSON.parse(localStorage.getItem('sg_transactions') || '[]');
+      const storedBudgets = JSON.parse(localStorage.getItem('sg_budgets') || '[]');
       const storedCat = JSON.parse(localStorage.getItem('sg_categories') || '[]');
       const storedLoans = JSON.parse(localStorage.getItem('sg_loans') || '[]');
       const storedCards = JSON.parse(localStorage.getItem('sg_cards') || '[]');
 
       setBankAccounts(storedBanks);
       setTransactions(storedTx);
+      setBudgets(storedBudgets);
       setCategories(storedCat);
       setLoans(storedLoans);
       setCards(storedCards);
@@ -47,6 +50,11 @@ export const AppProvider = ({ children }) => {
 
   useEffect(() => {
     if (!isDataLoaded) return;
+    localStorage.setItem('sg_budgets', JSON.stringify(budgets));
+  }, [budgets, isDataLoaded]);
+
+  useEffect(() => {
+    if (!isDataLoaded) return;
     localStorage.setItem('sg_categories', JSON.stringify(categories));
   }, [categories, isDataLoaded]);
 
@@ -63,8 +71,12 @@ export const AppProvider = ({ children }) => {
   // Computed values
   const totalExpectedIncome = incomePool.reduce((sum, item) => sum + Number(item.expected || 0), 0);
   const totalActualIncome = incomePool.reduce((sum, item) => sum + Number(item.actual || 0), 0);
-  const totalPlannedBudget = categories.reduce((sum, cat) => sum + Number(cat.limit || 0), 0);
-  const totalActualSpent = categories.reduce((sum, cat) => sum + Number(cat.spent || 0), 0);
+  const totalPlannedBudget = budgets.reduce((sum, b) => sum + Number(b.limit || 0), 0);
+  
+  const totalActualSpent = transactions
+    .filter(t => t.type === 'Expense')
+    .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+    
   const leftToSpendBalance = totalPlannedBudget - totalActualSpent;
 
   // Loan aggregates
@@ -88,11 +100,6 @@ export const AppProvider = ({ children }) => {
 
     setTransactions(prev => [newTx, ...prev]);
 
-    // Update category spent (local)
-    setCategories(prev => prev.map(cat => 
-      cat.name === txData.category ? { ...cat, spent: Number(cat.spent) + amount } : cat
-    ));
-
     // Deduct from bank account if specified (local)
     if (txData.bankAccountId) {
       setBankAccounts(prev => prev.map(b => 
@@ -106,6 +113,29 @@ export const AppProvider = ({ children }) => {
       setCards(prev => prev.map(c => 
         (c.id === txData.cardId)
           ? { ...c, unbilledBalance: Number(c.unbilledBalance) + amount } : c
+      ));
+    }
+  };
+
+  const addIncome = (incomeData) => {
+    const amount = Number(incomeData.amount);
+    const newTx = {
+      id: `tx-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      type: 'Income',
+      date: incomeData.date || new Date().toISOString().split('T')[0],
+      amount: amount,
+      category: incomeData.category,
+      note: incomeData.note || '',
+      paymentMethod: incomeData.paymentMethod || 'Bank/Cash'
+    };
+
+    setTransactions(prev => [newTx, ...prev]);
+
+    // Add to bank account if specified
+    if (incomeData.bankAccountId) {
+      setBankAccounts(prev => prev.map(b => 
+        (b.id === incomeData.bankAccountId) 
+          ? { ...b, balance: Number(b.balance) + amount } : b
       ));
     }
   };
@@ -130,6 +160,63 @@ export const AppProvider = ({ children }) => {
     }));
   };
 
+  const deleteTransaction = (id) => {
+    const tx = transactions.find(t => t.id === id);
+    if (!tx) return;
+
+    if (window.confirm('Are you sure you want to delete this transaction?')) {
+      // Revert the transaction effects
+      if (tx.type === 'Expense') {
+        if (tx.bankAccountId) {
+          setBankAccounts(prev => prev.map(b => 
+            b.id === tx.bankAccountId ? { ...b, balance: Number(b.balance) + Number(tx.amount) } : b
+          ));
+        }
+        if (tx.cardId) {
+          setCards(prev => prev.map(c => 
+            c.id === tx.cardId ? { ...c, unbilledBalance: Number(c.unbilledBalance) - Number(tx.amount) } : c
+          ));
+        }
+      } else if (tx.type === 'Income') {
+        if (tx.bankAccountId) {
+          setBankAccounts(prev => prev.map(b => 
+            b.id === tx.bankAccountId ? { ...b, balance: Number(b.balance) - Number(tx.amount) } : b
+          ));
+        }
+      } else if (tx.type === 'Transfer') {
+        setBankAccounts(prev => prev.map(b => {
+          if (b.name === tx.fromAccount) return { ...b, balance: Number(b.balance) + Number(tx.amount) };
+          if (b.name === tx.toAccount) return { ...b, balance: Number(b.balance) - Number(tx.amount) };
+          return b;
+        }));
+      }
+
+      setTransactions(prev => prev.filter(t => t.id !== id));
+    }
+  };
+
+  const updateTransaction = (id, newAmount) => {
+    const tx = transactions.find(t => t.id === id);
+    if (!tx) return;
+    const diff = Number(newAmount) - Number(tx.amount);
+    
+    if (tx.type === 'Expense') {
+      if (tx.bankAccountId) {
+        setBankAccounts(prev => prev.map(b => 
+          b.id === tx.bankAccountId ? { ...b, balance: Number(b.balance) - diff } : b
+        ));
+      }
+    } else if (tx.type === 'Income') {
+      if (tx.bankAccountId) {
+        setBankAccounts(prev => prev.map(b => 
+          b.id === tx.bankAccountId ? { ...b, balance: Number(b.balance) + diff } : b
+        ));
+      }
+    }
+    
+    setTransactions(prev => prev.map(t => t.id === id ? { ...t, amount: Number(newAmount) } : t));
+  };
+
   const addBankAccount = (name, balance) => {
     const newBank = {
       id: `bank-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -149,24 +236,39 @@ export const AppProvider = ({ children }) => {
     setBankAccounts(prev => prev.filter(b => b.id !== id));
   };
 
-  const addCategory = (name, limit, type, icon) => {
+  const addBudget = (name, limit) => {
+    const newBudget = {
+      id: `budget-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      name,
+      limit: Number(limit)
+    };
+    setBudgets(prev => [...prev, newBudget]);
+  };
+
+  const deleteBudget = (id) => {
+    setBudgets(prev => prev.filter(b => b.id !== id));
+    // Optionally: delete all categories associated with this budget?
+    // Let's leave categories unassigned for now, or delete them:
+    setCategories(prev => prev.filter(c => c.budgetId !== id));
+  };
+
+  const updateBudgetLimit = (id, newLimit) => {
+    setBudgets(prev => prev.map(b => b.id === id ? { ...b, limit: Number(newLimit) } : b));
+  };
+
+  const addCategory = (name, type, budgetId = null) => {
     const newCat = {
       id: `cat-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       name,
-      limit: Number(limit),
       type,
-      icon,
-      spent: 0
+      budgetId,
+      icon: 'PieChart'
     };
     setCategories(prev => [...prev, newCat]);
   };
 
   const deleteCategory = (id) => {
     setCategories(prev => prev.filter(c => c.id !== id));
-  };
-
-  const updateCategoryLimit = (id, newLimit) => {
-    setCategories(prev => prev.map(c => c.id === id ? { ...c, limit: Number(newLimit) } : c));
   };
 
   const addCard = (name, type, statementBalance, unbilledBalance) => {
@@ -204,11 +306,12 @@ export const AppProvider = ({ children }) => {
   return (
     <AppContext.Provider value={{
       isDataLoaded,
-      incomePool, categories, loans, cards, transactions, bankAccounts,
+      incomePool, budgets, categories, loans, cards, transactions, bankAccounts,
       totalExpectedIncome, totalActualIncome, totalPlannedBudget, totalActualSpent,
       leftToSpendBalance, totalPendingLoanAmount, totalPendingPrincipal, totalFutureInterest,
-      addTransaction, transferFunds, addBankAccount, updateBankAccount, deleteBankAccount,
-      addCategory, deleteCategory, updateCategoryLimit,
+      addTransaction, deleteTransaction, updateTransaction, addIncome, transferFunds, addBankAccount, updateBankAccount, deleteBankAccount,
+      addBudget, deleteBudget, updateBudgetLimit,
+      addCategory, deleteCategory,
       addCard, deleteCard, updateCardBalances,
       addLoan
     }}>

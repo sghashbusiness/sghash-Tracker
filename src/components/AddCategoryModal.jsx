@@ -1,24 +1,24 @@
 import React, { useState } from 'react';
 import { X, Check } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { CustomSelect } from './ui/CustomSelect';
 
 export const AddCategoryModal = ({ isOpen, onClose }) => {
-  const { addCategory } = useApp();
+  const { addCategory, budgets } = useApp();
   
   const [name, setName] = useState('');
-  const [limit, setLimit] = useState('');
-  const [type, setType] = useState('Variable');
-  const [icon, setIcon] = useState('Home');
+  const [budgetId, setBudgetId] = useState('');
+  const [type, setType] = useState('Expense');
 
   if (!isOpen) return null;
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!name || !limit) return;
-    addCategory(name, limit, type, icon);
+    if (!name || (!budgetId && type === 'Expense')) return;
+    addCategory(name, type, budgetId || null);
     setName('');
-    setLimit('');
-    setType('Variable');
+    setBudgetId('');
+    setType('Expense');
     onClose();
   };
 
@@ -26,7 +26,7 @@ export const AddCategoryModal = ({ isOpen, onClose }) => {
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal-content" onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h2 className="title-md">Add Budget Category</h2>
+          <h2 className="title-md">Add Category</h2>
           <button onClick={onClose} className="btn-ghost" style={{ padding: '6px', borderRadius: '50%' }}>
             <X size={18} />
           </button>
@@ -45,41 +45,32 @@ export const AddCategoryModal = ({ isOpen, onClose }) => {
             />
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Monthly Limit (₹)</label>
-            <input 
-              type="number"
-              required
-              className="form-input"
-              value={limit}
-              onChange={e => setLimit(e.target.value)}
-              placeholder="0"
-            />
-          </div>
+          {type === 'Expense' && (
+            <div className="form-group">
+              <label className="form-label">Parent Budget</label>
+              <CustomSelect 
+                value={budgetId} 
+                onChange={setBudgetId}
+                required
+                placeholder="Select Budget..."
+                options={budgets.map(b => ({
+                  value: b.id,
+                  label: `${b.name} (Limit: ₹${b.limit})`
+                }))}
+              />
+            </div>
+          )}
 
           <div className="form-group">
             <label className="form-label">Type</label>
-            <select className="form-select" value={type} onChange={e => setType(e.target.value)}>
-              <option value="Fixed">Fixed Outflow</option>
-              <option value="Variable">Variable Outflow</option>
-              <option value="Discretionary">Discretionary</option>
-              <option value="Investment">Investment</option>
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Icon Name</label>
-            <select className="form-select" value={icon} onChange={e => setIcon(e.target.value)}>
-              <option value="Home">Home</option>
-              <option value="ShoppingBag">Shopping Bag</option>
-              <option value="Fuel">Fuel / Transit</option>
-              <option value="Coffee">Coffee / Dining</option>
-              <option value="Gift">Gifts / Entertainment</option>
-              <option value="PiggyBank">Savings</option>
-              <option value="TrendingUp">Investments</option>
-              <option value="Train">Travel</option>
-              <option value="Landmark">Bills / Utilities</option>
-            </select>
+            <CustomSelect 
+              value={type} 
+              onChange={setType}
+              options={[
+                { value: 'Expense', label: 'Expense' },
+                { value: 'Income', label: 'Income' }
+              ]}
+            />
           </div>
 
           <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '16px', padding: '14px' }}>

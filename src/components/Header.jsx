@@ -1,5 +1,7 @@
-export const Header = () => {
+import React from 'react';
+import { Settings } from 'lucide-react';
 
+export const Header = ({ onOpenSettings }) => {
   const currentMonthYear = new Intl.DateTimeFormat('en-US', {
     month: 'long',
     year: 'numeric'
@@ -31,9 +33,21 @@ export const Header = () => {
             {currentMonthYear}
           </span>
         </div>
-        <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em', marginTop: '2px' }}>
-          SgHash Tracker <span style={{ fontSize: '0.75rem', color: '#818cf8', fontWeight: 600, background: 'rgba(99, 102, 241, 0.15)', padding: '2px 6px', borderRadius: '6px' }}>PRO</span>
-        </h1>
+        <img 
+          src="/AppLogo_transparent.png" 
+          alt="App Logo" 
+          style={{ height: '36px', marginTop: '4px' }}
+        />
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <button 
+          onClick={onOpenSettings}
+          className="btn-ghost"
+          style={{ padding: '8px', borderRadius: '50%' }}
+        >
+          <Settings size={20} color="var(--text-secondary)" />
+        </button>
       </div>
     </header>
   );
