@@ -12,8 +12,19 @@ export const LoginScreen = () => {
         if (event.url.includes('com.sgtracker.app://')) {
           await Browser.close();
           const url = new URL(event.url);
-          // Redirect the webview to root with the auth hash/query so Supabase processes it
-          window.location.href = `/${url.search}${url.hash}`;
+          const hashParams = new URLSearchParams(url.hash.substring(1));
+          const access_token = hashParams.get('access_token');
+          const refresh_token = hashParams.get('refresh_token');
+
+          if (access_token && refresh_token) {
+            await supabase.auth.setSession({
+              access_token,
+              refresh_token
+            });
+          } else {
+            // Fallback if URL doesn't have hash params directly
+            window.location.href = `/${url.search}${url.hash}`;
+          }
         }
       });
     };
