@@ -3,7 +3,7 @@ import { X, Building, Check, Plus, Edit2, Trash2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export const ManageBanksModal = ({ isOpen, onClose }) => {
-  const { bankAccounts, addBankAccount, updateBankAccount, deleteBankAccount } = useApp();
+  const { bankAccounts, addBankAccount, updateBankAccount, deleteBankAccount, showConfirm } = useApp();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editingBankId, setEditingBankId] = useState(null);
@@ -86,9 +86,9 @@ export const ManageBanksModal = ({ isOpen, onClose }) => {
                     </button>
                     <button 
                       onClick={() => {
-                        if(window.confirm('Delete this bank account?')) {
+                        showConfirm('Delete this bank account?', () => {
                           deleteBankAccount(b.id);
-                        }
+                        });
                       }} 
                       className="btn-ghost" 
                       style={{ padding: '6px', color: '#f43f5e' }}

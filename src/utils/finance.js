@@ -10,52 +10,24 @@ export const formatCurrency = (amount) => {
   }).format(amount || 0);
 };
 
-export const calculateLoanMetrics = (loan) => {
-  const remainingMonths = Math.max(0, loan.totalMonths - loan.monthsPaid);
-  // User spec: True payoff cost = exact EMI multiplied by remaining months
+export const calculateLoanMetrics = (loan, totalExpenses = 0) => {
+  // Compute dynamically paid months: Initial + (Expenses / EMI)
+  const additionalMonthsPaid = Math.floor(totalExpenses / loan.emi);
+  const totalMonthsPaid = (loan.initialMonthsPaid || 0) + additionalMonthsPaid;
+  
+  const remainingMonths = Math.max(0, loan.totalMonths - totalMonthsPaid);
   const totalPendingAmount = loan.emi * remainingMonths;
-  const pendingPrincipal = loan.currentPrincipal;
-  // User spec: Future interest burden = Total Pending Amount minus Pending Principal
-  const futureInterest = Math.max(0, totalPendingAmount - pendingPrincipal);
-  const tenureProgress = loan.totalMonths > 0 ? (loan.monthsPaid / loan.totalMonths) * 100 : 0;
+  const tenureProgress = loan.totalMonths > 0 ? (totalMonthsPaid / loan.totalMonths) * 100 : 0;
 
   return {
+    totalMonthsPaid,
     remainingMonths,
     totalPendingAmount,
-    pendingPrincipal,
-    futureInterest,
     tenureProgress: Math.min(100, Math.round(tenureProgress)),
   };
 };
 
-/**
- * Calculates exact monthly split: Opening Principal, Interest Portion, Principal Deduction, Closing Principal
- */
-export const generateAmortizationSchedule = (loan, maxMonths = 12) => {
-  const monthlyRate = (loan.annualInterestRate / 12) / 100;
-  let balance = loan.currentPrincipal;
-  const schedule = [];
 
-  for (let i = 1; i <= Math.min(loan.totalMonths - loan.monthsPaid, maxMonths); i++) {
-    const opening = balance;
-    const interest = Math.round(opening * monthlyRate);
-    const principalDeduction = Math.min(opening, Math.max(0, loan.emi - interest));
-    const closing = Math.max(0, Math.round(opening - principalDeduction));
-
-    schedule.push({
-      cycle: loan.monthsPaid + i,
-      openingPrincipal: opening,
-      interestPortion: interest,
-      principalDeduction,
-      closingPrincipal: closing
-    });
-
-    balance = closing;
-    if (balance <= 0) break;
-  }
-
-  return schedule;
-};
 
 /**
  * Credit Card Billing Cycle Calculations

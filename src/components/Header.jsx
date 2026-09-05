@@ -1,9 +1,10 @@
 import React from 'react';
 import { Settings } from 'lucide-react';
 
-export const Header = ({ onOpenSettings }) => {
-  const currentMonthYear = new Intl.DateTimeFormat('en-US', {
-    month: 'long',
+export const Header = () => {
+  const currentDate = new Intl.DateTimeFormat('en-US', {
+    day: '2-digit',
+    month: 'short',
     year: 'numeric'
   }).format(new Date());
 
@@ -21,33 +22,24 @@ export const Header = ({ onOpenSettings }) => {
       borderBottom: '1px solid var(--border-subtle)'
     }}>
       <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <div style={{
-            width: '8px',
-            height: '8px',
-            borderRadius: '50%',
-            background: 'var(--accent-emerald)',
-            boxShadow: '0 0 10px var(--accent-emerald)'
-          }} />
-          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-            {currentMonthYear}
-          </span>
-        </div>
         <img 
           src="/AppLogo_transparent.png" 
           alt="App Logo" 
-          style={{ height: '36px', marginTop: '4px' }}
+          style={{ height: '40px' }}
         />
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <button 
-          onClick={onOpenSettings}
-          className="btn-ghost"
-          style={{ padding: '8px', borderRadius: '50%' }}
-        >
-          <Settings size={20} color="var(--text-secondary)" />
-        </button>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{
+          width: '8px',
+          height: '8px',
+          borderRadius: '50%',
+          background: 'var(--accent-emerald)',
+          boxShadow: '0 0 10px var(--accent-emerald)'
+        }} />
+        <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          {currentDate}
+        </span>
       </div>
     </header>
   );

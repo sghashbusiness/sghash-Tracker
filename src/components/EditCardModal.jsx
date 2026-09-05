@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Check, CreditCard } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
-export const AddCardModal = ({ isOpen, onClose }) => {
-  const { addCard } = useApp();
+export const EditCardModal = ({ isOpen, onClose, card }) => {
+  const { updateCardDetails } = useApp();
   
   const [name, setName] = useState('');
   const [statementDay, setStatementDay] = useState('');
@@ -11,7 +11,17 @@ export const AddCardModal = ({ isOpen, onClose }) => {
   const [dueDay, setDueDay] = useState('');
   const [dueOffsetDays, setDueOffsetDays] = useState('');
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (card && isOpen) {
+      setName(card.name);
+      setStatementDay(card.statementDay);
+      setDueRule(card.dueRule);
+      setDueDay(card.dueDay || '');
+      setDueOffsetDays(card.dueOffsetDays || '');
+    }
+  }, [card, isOpen]);
+
+  if (!isOpen || !card) return null;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -19,13 +29,14 @@ export const AddCardModal = ({ isOpen, onClose }) => {
     if (dueRule === 'fixed_day' && !dueDay) return;
     if (dueRule === 'offset_days' && !dueOffsetDays) return;
 
-    addCard(name, statementDay, dueRule, dueDay, dueOffsetDays);
+    updateCardDetails(card.id, {
+      name,
+      statementDay: Number(statementDay),
+      dueRule,
+      dueDay: dueRule === 'fixed_day' ? Number(dueDay) : null,
+      dueOffsetDays: dueRule === 'offset_days' ? Number(dueOffsetDays) : null
+    });
     
-    setName('');
-    setStatementDay('');
-    setDueRule('fixed_day');
-    setDueDay('');
-    setDueOffsetDays('');
     onClose();
   };
 
@@ -35,7 +46,7 @@ export const AddCardModal = ({ isOpen, onClose }) => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <h2 className="title-md" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <CreditCard size={20} color="#818cf8" />
-            Add Credit Card
+            Edit Credit Card
           </h2>
           <button onClick={onClose} className="btn-ghost" style={{ padding: '6px', borderRadius: '50%' }}>
             <X size={18} />
@@ -106,7 +117,7 @@ export const AddCardModal = ({ isOpen, onClose }) => {
 
           <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '16px', padding: '14px' }}>
             <Check size={18} />
-            <span>Save Credit Card</span>
+            <span>Save Changes</span>
           </button>
         </form>
       </div>

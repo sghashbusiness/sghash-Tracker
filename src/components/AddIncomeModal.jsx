@@ -40,7 +40,6 @@ export const AddIncomeModal = ({ isOpen, onClose }) => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <div>
             <h2 className="title-md">Log Income</h2>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Adds directly to your balance</p>
           </div>
           <button onClick={onClose} className="btn-ghost" style={{ padding: '6px', borderRadius: '50%' }}>
             <X size={18} />
@@ -51,8 +50,8 @@ export const AddIncomeModal = ({ isOpen, onClose }) => {
           {/* Amount Input */}
           <div className="form-group" style={{ textAlign: 'center', marginBottom: '24px' }}>
             <label className="form-label" style={{ fontSize: '0.75rem', textTransform: 'uppercase' }}>Amount (₹)</label>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-              <span style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--accent-emerald)' }}>₹</span>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '4px' }}>
+              <span style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--accent-emerald)' }}>₹</span>
               <input
                 type="number"
                 step="any"
@@ -69,8 +68,8 @@ export const AddIncomeModal = ({ isOpen, onClose }) => {
                   fontSize: '2.5rem',
                   fontWeight: 800,
                   color: 'var(--text-primary)',
-                  width: '180px',
-                  textAlign: 'left',
+                  width: '140px',
+                  textAlign: 'center',
                   fontFamily: 'var(--font-mono)'
                 }}
               />
@@ -95,14 +94,17 @@ export const AddIncomeModal = ({ isOpen, onClose }) => {
           {/* Bank Account */}
           <div className="form-group">
             <label className="form-label">Deposit Into</label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
               {bankAccounts.map(b => (
                 <button
                   type="button"
                   key={b.id}
                   onClick={() => setSelectedBankId(b.id)}
                   style={{
-                    padding: '10px 4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '12px 8px',
                     borderRadius: 'var(--radius-md)',
                     border: selectedBankId === b.id ? '1px solid #10b981' : '1px solid var(--border-subtle)',
                     background: selectedBankId === b.id ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255, 255, 255, 0.04)',
@@ -119,7 +121,10 @@ export const AddIncomeModal = ({ isOpen, onClose }) => {
                 type="button"
                 onClick={() => setSelectedBankId('')}
                 style={{
-                  padding: '10px 4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '12px 8px',
                   borderRadius: 'var(--radius-md)',
                   border: selectedBankId === '' ? '1px solid #38bdf8' : '1px solid var(--border-subtle)',
                   background: selectedBankId === '' ? 'rgba(56, 189, 248, 0.15)' : 'rgba(255, 255, 255, 0.04)',

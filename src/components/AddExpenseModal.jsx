@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Check } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { CustomSelect } from './ui/CustomSelect';
@@ -7,7 +7,21 @@ export const AddExpenseModal = ({ isOpen, onClose }) => {
   const { categories, budgets, cards, bankAccounts, addTransaction } = useApp();
 
   const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState(categories.length > 0 ? categories[0].name : '');
+  
+  const [budget, setBudget] = useState(budgets.length > 0 ? budgets[0].id : '');
+  const getBudgetCats = (bId) => categories.filter(c => c.budgetId === bId && (!c.type || c.type === 'Expense'));
+  const [category, setCategory] = useState('');
+
+  useEffect(() => {
+    if (budget) {
+      const cats = getBudgetCats(budget);
+      if (cats.length > 0 && !cats.find(c => c.name === category)) {
+        setCategory(cats[0].name);
+      } else if (cats.length === 0) {
+        setCategory('');
+      }
+    }
+  }, [budget, categories]);
   
   // By default select first bank account or Cash
   const [paymentMethod, setPaymentMethod] = useState(bankAccounts.length > 0 ? bankAccounts[0].name : 'Cash');
@@ -23,9 +37,12 @@ export const AddExpenseModal = ({ isOpen, onClose }) => {
     e.preventDefault();
     if (!amount || Number(amount) <= 0) return;
 
+    const budgetObj = budgets.find(b => b.id === budget);
+    const finalCategory = category || (budgetObj ? budgetObj.name : 'Uncategorized');
+
     addTransaction({
       amount: Number(amount),
-      category,
+      category: finalCategory,
       paymentMethod,
       cardId: selectedCardId || null,
       bankAccountId: selectedBankId || null,
@@ -58,7 +75,6 @@ export const AddExpenseModal = ({ isOpen, onClose }) => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <div>
             <h2 className="title-md">Log Expense</h2>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Deducts dynamically from your budget</p>
           </div>
           <button onClick={onClose} className="btn-ghost" style={{ padding: '6px', borderRadius: '50%' }}>
             <X size={18} />
@@ -69,8 +85,8 @@ export const AddExpenseModal = ({ isOpen, onClose }) => {
           {/* Amount Input */}
           <div className="form-group" style={{ textAlign: 'center', marginBottom: '24px' }}>
             <label className="form-label" style={{ fontSize: '0.75rem', textTransform: 'uppercase' }}>Amount (₹)</label>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-              <span style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--accent-emerald)' }}>₹</span>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '4px' }}>
+              <span style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--accent-emerald)' }}>₹</span>
               <input
                 type="number"
                 step="any"
@@ -87,45 +103,42 @@ export const AddExpenseModal = ({ isOpen, onClose }) => {
                   fontSize: '2.5rem',
                   fontWeight: 800,
                   color: 'var(--text-primary)',
-                  width: '180px',
-                  textAlign: 'left',
+                  width: '140px',
+                  textAlign: 'center',
                   fontFamily: 'var(--font-mono)'
                 }}
               />
             </div>
           </div>
 
-          {/* Category */}
+          {/* Budget */}
           <div className="form-group">
-            <label className="form-label">Expense Category</label>
+            <label className="form-label">Budget</label>
             <CustomSelect 
-              value={category} 
-              onChange={setCategory}
-              placeholder="Select Category..."
-              options={[
-                ...budgets.map(b => {
-                  const budgetCats = categories.filter(c => c.budgetId === b.id && (c.type === 'Expense' || !c.type || c.type !== 'Income'));
-                  if (budgetCats.length === 0) return null;
-                  return {
-                    label: `${b.name} Budget`,
-                    options: budgetCats.map(c => ({ value: c.name, label: c.name }))
-                  };
-                }).filter(Boolean),
-                {
-                  label: "Other Categories",
-                  options: categories.filter(c => !c.budgetId && (c.type === 'Expense' || !c.type || c.type !== 'Income')).map(c => ({
-                    value: c.name,
-                    label: c.name
-                  }))
-                }
-              ].filter(group => group.options && group.options.length > 0)}
+              value={budget} 
+              onChange={setBudget}
+              placeholder="Select Budget..."
+              options={budgets.map(b => ({ value: b.id, label: b.name }))}
             />
           </div>
+
+          {/* Category */}
+          {budget && getBudgetCats(budget).length > 0 && (
+            <div className="form-group">
+              <label className="form-label">Expense Category</label>
+              <CustomSelect 
+                value={category} 
+                onChange={setCategory}
+                placeholder="Select Category..."
+                options={getBudgetCats(budget).map(c => ({ value: c.name, label: c.name }))}
+              />
+            </div>
+          )}
 
           {/* Payment Method / Bank Account */}
           <div className="form-group">
             <label className="form-label">Deduct From</label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
               {/* Bank Accounts */}
               {bankAccounts.map(b => (
                 <button
@@ -133,7 +146,10 @@ export const AddExpenseModal = ({ isOpen, onClose }) => {
                   key={b.id}
                   onClick={() => handleSelectMethod(b.name, 'bank', b.id)}
                   style={{
-                    padding: '10px 4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '12px 8px',
                     borderRadius: 'var(--radius-md)',
                     border: paymentMethod === b.name ? '1px solid #38bdf8' : '1px solid var(--border-subtle)',
                     background: paymentMethod === b.name ? 'rgba(56, 189, 248, 0.15)' : 'rgba(255, 255, 255, 0.04)',
@@ -153,7 +169,10 @@ export const AddExpenseModal = ({ isOpen, onClose }) => {
                   key={c.id}
                   onClick={() => handleSelectMethod(c.name, 'card', c.id)}
                   style={{
-                    padding: '10px 4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '12px 8px',
                     borderRadius: 'var(--radius-md)',
                     border: paymentMethod === c.name ? '1px solid #f59e0b' : '1px solid var(--border-subtle)',
                     background: paymentMethod === c.name ? 'rgba(245, 158, 11, 0.15)' : 'rgba(255, 255, 255, 0.04)',
@@ -170,7 +189,10 @@ export const AddExpenseModal = ({ isOpen, onClose }) => {
                 type="button"
                 onClick={() => handleSelectMethod('Cash', 'cash')}
                 style={{
-                  padding: '10px 4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '12px 8px',
                   borderRadius: 'var(--radius-md)',
                   border: paymentMethod === 'Cash' ? '1px solid #10b981' : '1px solid var(--border-subtle)',
                   background: paymentMethod === 'Cash' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255, 255, 255, 0.04)',

@@ -26,7 +26,10 @@ export const AddCategoryModal = ({ isOpen, onClose }) => {
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal-content" onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h2 className="title-md">Add Category</h2>
+          <h2 className="title-md" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><path d="M7 7h.01"/></svg>
+            Add Category
+          </h2>
           <button onClick={onClose} className="btn-ghost" style={{ padding: '6px', borderRadius: '50%' }}>
             <X size={18} />
           </button>
@@ -45,6 +48,18 @@ export const AddCategoryModal = ({ isOpen, onClose }) => {
             />
           </div>
 
+          <div className="form-group">
+            <label className="form-label">Type</label>
+            <CustomSelect 
+              value={type} 
+              onChange={setType}
+              options={[
+                { value: 'Expense', label: 'Expense' },
+                { value: 'Income', label: 'Income' }
+              ]}
+            />
+          </div>
+
           {type === 'Expense' && (
             <div className="form-group">
               <label className="form-label">Parent Budget</label>
@@ -60,18 +75,6 @@ export const AddCategoryModal = ({ isOpen, onClose }) => {
               />
             </div>
           )}
-
-          <div className="form-group">
-            <label className="form-label">Type</label>
-            <CustomSelect 
-              value={type} 
-              onChange={setType}
-              options={[
-                { value: 'Expense', label: 'Expense' },
-                { value: 'Income', label: 'Income' }
-              ]}
-            />
-          </div>
 
           <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '16px', padding: '14px' }}>
             <Check size={18} />

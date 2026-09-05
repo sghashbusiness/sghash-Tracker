@@ -13,13 +13,15 @@ import {
 import { useApp } from '../context/AppContext';
 import { formatCurrency, calculateCardBillingInfo } from '../utils/finance';
 import { AddCardModal } from '../components/AddCardModal';
+import { EditCardModal } from '../components/EditCardModal';
 
 export const BanksTab = ({ onOpenTransfer, onOpenManageBanks }) => {
-  const { bankAccounts, cards, updateCardBalances, deleteCard } = useApp();
+  const { bankAccounts, cards, updateCardBalances, deleteCard, showConfirm } = useApp();
   const [editingCardId, setEditingCardId] = useState(null);
   const [unbilledInput, setUnbilledInput] = useState('');
   const [statementInput, setStatementInput] = useState('');
   const [isAddCardModalOpen, setIsAddCardModalOpen] = useState(false);
+  const [editingCardSettings, setEditingCardSettings] = useState(null);
 
   const handleStartEdit = (card) => {
     setEditingCardId(card.id);
@@ -37,10 +39,10 @@ export const BanksTab = ({ onOpenTransfer, onOpenManageBanks }) => {
   };
 
   const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this credit card?')) {
+    showConfirm('Are you sure you want to delete this credit card?', () => {
       deleteCard(id);
       setEditingCardId(null);
-    }
+    });
   };
 
   return (
@@ -156,19 +158,36 @@ export const BanksTab = ({ onOpenTransfer, onOpenManageBanks }) => {
                       {card.name}
                     </h3>
                   </div>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px', display: 'block' }}>
-                    {isAxis ? 'Fixed Due: 2nd of month' : 'Offset Due: 17 days from statement'}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block' }}>
+                      {card.dueRule === 'fixed_day' ? `Fixed Due: ${card.dueDay}` : `Offset Due: ${card.dueOffsetDays} days`}
+                    </span>
+                    <span className={`badge ${isDueUrgent ? 'badge-rose' : 'badge-amber'}`} style={{ padding: '2px 6px', fontSize: '0.65rem' }}>
+                      <Clock size={10} />
+                      {billing.daysUntilDue > 0 ? `${billing.daysUntilDue} days left` : 'Due Today'}
+                    </span>
+                  </div>
                 </div>
-
-                <span className={`badge ${isDueUrgent ? 'badge-rose' : 'badge-amber'}`}>
-                  <Clock size={11} />
-                  {billing.daysUntilDue > 0 ? `${billing.daysUntilDue} days left` : 'Due Today'}
-                </span>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    onClick={() => setEditingCardSettings(card)}
+                    className="btn-ghost"
+                    style={{ padding: '6px', color: '#818cf8', borderColor: 'transparent', background: 'rgba(129, 140, 248, 0.1)' }}
+                  >
+                    <Edit3 size={14} />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(card.id)}
+                    className="btn-ghost"
+                    style={{ padding: '6px', color: '#f43f5e', borderColor: 'transparent', background: 'rgba(244, 63, 94, 0.1)' }}
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
               </div>
 
               <div style={{ 
-                display: 'grid', 
+                display: 'grid',  
                 gridTemplateColumns: '1fr 1fr', 
                 gap: '12px',
                 background: 'rgba(0, 0, 0, 0.35)',
@@ -182,7 +201,7 @@ export const BanksTab = ({ onOpenTransfer, onOpenManageBanks }) => {
                       Statement Balance
                     </span>
                     <span style={{ fontSize: '0.65rem', background: 'rgba(255,255,255,0.1)', padding: '1px 4px', borderRadius: '3px', color: '#cbd5e1' }}>
-                      Locked 14th
+                      Locked {card.statementDay}
                     </span>
                   </div>
                   {isEditing ? (
@@ -222,7 +241,7 @@ export const BanksTab = ({ onOpenTransfer, onOpenManageBanks }) => {
                     </div>
                   )}
                   <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
-                    Locks in: <strong>{billing.daysUntilNextStatement} days</strong> (14th)
+                    Locks in: <strong>{billing.daysUntilNextStatement} days</strong> ({card.statementDay}th)
                   </span>
                 </div>
               </div>
@@ -238,11 +257,11 @@ export const BanksTab = ({ onOpenTransfer, onOpenManageBanks }) => {
                       Save
                     </button>
                     <button 
-                      onClick={() => handleDelete(card.id)}
+                      onClick={() => setEditingCardId(null)}
                       className="btn-ghost"
-                      style={{ padding: '6px 10px', fontSize: '0.75rem', color: '#f43f5e', border: 'none' }}
+                      style={{ padding: '6px 10px', fontSize: '0.75rem', color: 'var(--text-muted)', border: 'none' }}
                     >
-                      <Trash2 size={14} />
+                      Cancel
                     </button>
                   </div>
                 ) : (
@@ -259,9 +278,9 @@ export const BanksTab = ({ onOpenTransfer, onOpenManageBanks }) => {
                 {card.statementBalance > 0 && !isEditing && (
                   <button 
                     onClick={() => {
-                      if (window.confirm(`Mark statement bill of ${formatCurrency(card.statementBalance)} as paid?`)) {
+                      showConfirm(`Mark statement bill of ${formatCurrency(card.statementBalance)} as paid?`, () => {
                         handleMarkBillPaid(card.id);
-                      }
+                      });
                     }}
                     className="btn-ghost"
                     style={{ fontSize: '0.75rem', padding: '5px 10px', color: '#34d399', borderColor: 'rgba(16, 185, 129, 0.3)' }}
@@ -277,6 +296,7 @@ export const BanksTab = ({ onOpenTransfer, onOpenManageBanks }) => {
       </div>
 
       <AddCardModal isOpen={isAddCardModalOpen} onClose={() => setIsAddCardModalOpen(false)} />
+      <EditCardModal isOpen={!!editingCardSettings} onClose={() => setEditingCardSettings(null)} card={editingCardSettings} />
     </div>
   );
 };

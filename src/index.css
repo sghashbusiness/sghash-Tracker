@@ -319,26 +319,25 @@ body {
   z-index: 200;
   display: flex;
   justify-content: center;
-  align-items: flex-end;
+  align-items: center;
+  padding: 16px;
 }
 
 .modal-content {
   width: 100%;
   max-width: 460px;
   background: #0f1626;
-  border-top-left-radius: var(--radius-xl);
-  border-top-right-radius: var(--radius-xl);
+  border-radius: var(--radius-xl);
   border: 1px solid var(--border-subtle);
-  border-bottom: none;
-  padding: 24px 20px calc(var(--safe-bottom) + 20px);
+  padding: 24px 20px;
   max-height: 85vh;
   overflow-y: auto;
-  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 /* Form Inputs */

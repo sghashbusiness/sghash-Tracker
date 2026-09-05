@@ -11,12 +11,16 @@ export const HomeTab = ({ setActiveTab }) => {
 
   const totalBudget = budgets.reduce((sum, b) => sum + (Number(b.limit) || 0), 0);
   
+  const totalIncome = transactions
+    .filter(t => t.type === 'Income')
+    .reduce((sum, t) => sum + Number(t.amount), 0);
+  
   // Calculate expenses directly from transactions
   const totalActualSpent = transactions
     .filter(t => t.type === 'Expense')
     .reduce((sum, t) => sum + Number(t.amount), 0);
 
-  const budgetRemaining = totalBudget - totalActualSpent;
+  const budgetRemaining = totalIncome - totalActualSpent;
 
   return (
     <div className="animate-fade-in" style={{ padding: '16px 20px 100px 20px' }}>
@@ -63,6 +67,22 @@ export const HomeTab = ({ setActiveTab }) => {
           </div>
         </div>
 
+        {totalIncome > 0 && (
+          <div className="progress-bar-container" style={{ height: '8px', marginBottom: '16px', background: 'rgba(255,255,255,0.1)', borderRadius: '4px', overflow: 'hidden' }}>
+            <div 
+              className={`progress-bar-fill ${
+                totalActualSpent > totalIncome ? 'progress-fill-rose' : (totalActualSpent/totalIncome) > 0.8 ? 'progress-fill-amber' : 'progress-fill-emerald'
+              }`}
+              style={{ 
+                width: `${Math.min(100, (totalActualSpent / totalIncome) * 100)}%`,
+                height: '100%',
+                borderRadius: '4px',
+                transition: 'width 0.3s ease'
+              }}
+            />
+          </div>
+        )}
+
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <TrendingUp size={14} color="#f43f5e" />
@@ -70,8 +90,8 @@ export const HomeTab = ({ setActiveTab }) => {
             <span style={{ color: '#f8fafc', fontWeight: 600 }}>{formatCurrency(totalActualSpent)}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ color: 'var(--text-muted)' }}>Budget:</span>
-            <span style={{ color: '#94a3b8', fontWeight: 600 }}>{formatCurrency(totalBudget)}</span>
+            <span style={{ color: 'var(--text-muted)' }}>Income:</span>
+            <span style={{ color: '#94a3b8', fontWeight: 600 }}>{formatCurrency(totalIncome)}</span>
           </div>
         </div>
       </div>
@@ -125,6 +145,10 @@ export const HomeTab = ({ setActiveTab }) => {
               const childCategoryNames = categories
                 .filter(c => c.budgetId === budget.id)
                 .map(c => c.name);
+              
+              if (childCategoryNames.length === 0) {
+                childCategoryNames.push(budget.name);
+              }
                 
               // Calculate total spent for this budget
               const spent = transactions

@@ -43,8 +43,8 @@ export const TransferModal = ({ isOpen, onClose }) => {
           {/* Amount Input */}
           <div className="form-group" style={{ textAlign: 'center', marginBottom: '24px' }}>
             <label className="form-label" style={{ fontSize: '0.75rem', textTransform: 'uppercase' }}>Amount (₹)</label>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-              <span style={{ fontSize: '2rem', fontWeight: 700, color: '#f59e0b' }}>₹</span>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '4px' }}>
+              <span style={{ fontSize: '1.5rem', fontWeight: 700, color: '#f59e0b' }}>₹</span>
               <input
                 type="number"
                 step="any"
@@ -61,8 +61,8 @@ export const TransferModal = ({ isOpen, onClose }) => {
                   fontSize: '2.5rem',
                   fontWeight: 800,
                   color: 'var(--text-primary)',
-                  width: '180px',
-                  textAlign: 'left',
+                  width: '140px',
+                  textAlign: 'center',
                   fontFamily: 'var(--font-mono)'
                 }}
               />

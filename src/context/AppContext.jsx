@@ -15,6 +15,17 @@ export const AppProvider = ({ children }) => {
   const [transactions, setTransactions] = useState([]);
   const [bankAccounts, setBankAccounts] = useState([]);
 
+  // Confirm Modal State
+  const [confirmConfig, setConfirmConfig] = useState({ isOpen: false, message: '', onConfirm: null });
+
+  const showConfirm = (message, onConfirm) => {
+    setConfirmConfig({ isOpen: true, message, onConfirm });
+  };
+  
+  const closeConfirm = () => {
+    setConfirmConfig({ isOpen: false, message: '', onConfirm: null });
+  };
+
   // 1. Initial Load from LocalStorage
   useEffect(() => {
     try {
@@ -68,6 +79,19 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem('sg_cards', JSON.stringify(cards));
   }, [cards, isDataLoaded]);
 
+  // Sync Loans Budget Limit
+  useEffect(() => {
+    if (!isDataLoaded) return;
+    const totalEmi = loans.reduce((sum, l) => sum + Number(l.emi), 0);
+    setBudgets(prev => {
+      const hasLoansBudget = prev.some(b => b.name === 'Loans');
+      if (!hasLoansBudget && loans.length > 0) {
+        return [...prev, { id: 'budget-auto-loans', name: 'Loans', limit: totalEmi }];
+      }
+      return prev.map(b => b.name === 'Loans' ? { ...b, limit: totalEmi } : b);
+    });
+  }, [loans, isDataLoaded]);
+
   // Computed values
   const totalExpectedIncome = incomePool.reduce((sum, item) => sum + Number(item.expected || 0), 0);
   const totalActualIncome = incomePool.reduce((sum, item) => sum + Number(item.actual || 0), 0);
@@ -80,10 +104,14 @@ export const AppProvider = ({ children }) => {
   const leftToSpendBalance = totalPlannedBudget - totalActualSpent;
 
   // Loan aggregates
-  const loanMetricsList = loans.map(calculateLoanMetrics);
+  const getLoanExpenses = (loanName) => {
+    return transactions
+      .filter(t => t.type === 'Expense' && t.category === loanName)
+      .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+  };
+  
+  const loanMetricsList = loans.map(loan => calculateLoanMetrics(loan, getLoanExpenses(loan.name)));
   const totalPendingLoanAmount = loanMetricsList.reduce((sum, m) => sum + m.totalPendingAmount, 0);
-  const totalPendingPrincipal = loanMetricsList.reduce((sum, m) => sum + m.pendingPrincipal, 0);
-  const totalFutureInterest = loanMetricsList.reduce((sum, m) => sum + m.futureInterest, 0);
 
   // Actions
   const addTransaction = (txData) => {
@@ -95,7 +123,9 @@ export const AppProvider = ({ children }) => {
       amount: amount,
       category: txData.category,
       note: txData.note || '',
-      paymentMethod: txData.paymentMethod || 'Cash/UPI'
+      paymentMethod: txData.paymentMethod || 'Cash/UPI',
+      bankAccountId: txData.bankAccountId || null,
+      cardId: txData.cardId || null
     };
 
     setTransactions(prev => [newTx, ...prev]);
@@ -126,7 +156,8 @@ export const AppProvider = ({ children }) => {
       amount: amount,
       category: incomeData.category,
       note: incomeData.note || '',
-      paymentMethod: incomeData.paymentMethod || 'Bank/Cash'
+      paymentMethod: incomeData.paymentMethod || 'Bank/Cash',
+      bankAccountId: incomeData.bankAccountId || null
     };
 
     setTransactions(prev => [newTx, ...prev]);
@@ -164,7 +195,7 @@ export const AppProvider = ({ children }) => {
     const tx = transactions.find(t => t.id === id);
     if (!tx) return;
 
-    if (window.confirm('Are you sure you want to delete this transaction?')) {
+    showConfirm('Are you sure you want to delete this transaction?', () => {
       // Revert the transaction effects
       if (tx.type === 'Expense') {
         if (tx.bankAccountId) {
@@ -192,7 +223,7 @@ export const AppProvider = ({ children }) => {
       }
 
       setTransactions(prev => prev.filter(t => t.id !== id));
-    }
+    });
   };
 
   const updateTransaction = (id, newAmount) => {
@@ -271,28 +302,54 @@ export const AppProvider = ({ children }) => {
     setCategories(prev => prev.filter(c => c.id !== id));
   };
 
-  const addCard = (name, type, statementBalance, unbilledBalance) => {
+  const addCard = (name, statementDay, dueRule, dueDay, dueOffsetDays) => {
     const newCard = {
       id: `card-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       name,
-      type,
-      statementBalance: Number(statementBalance),
-      unbilledBalance: Number(unbilledBalance)
+      type: 'Credit Card',
+      statementBalance: 0,
+      unbilledBalance: 0,
+      statementDay: Number(statementDay),
+      dueRule,
+      dueDay: Number(dueDay) || null,
+      dueOffsetDays: Number(dueOffsetDays) || null
     };
     setCards(prev => [...prev, newCard]);
   };
 
-  const addLoan = (name, principal, emi, interestRate, totalMonths) => {
+  const updateCardDetails = (id, updatedData) => {
+    setCards(prev => prev.map(c => c.id === id ? { ...c, ...updatedData } : c));
+  };
+
+  const addLoan = (name, emi, totalMonths, initialMonthsPaid) => {
     const newLoan = {
       id: `loan-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       name,
-      totalPrincipal: Number(principal),
       emi: Number(emi),
-      annualInterestRate: Number(interestRate),
       totalMonths: Number(totalMonths),
-      monthsPaid: 0
+      initialMonthsPaid: Number(initialMonthsPaid) || 0
     };
     setLoans(prev => [...prev, newLoan]);
+
+    // Ensure category exists
+    setCategories(prev => {
+      if (prev.find(c => c.name === name && c.type === 'Expense')) return prev;
+      return [...prev, {
+        id: `cat-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        name: name,
+        type: 'Expense',
+        budgetId: 'budget-auto-loans',
+        icon: 'PieChart'
+      }];
+    });
+  };
+
+  const deleteLoan = (id) => {
+    setLoans(prev => prev.filter(l => l.id !== id));
+  };
+
+  const updateLoan = (id, updatedData) => {
+    setLoans(prev => prev.map(l => l.id === id ? { ...l, ...updatedData } : l));
   };
 
   const deleteCard = (id) => {
@@ -308,12 +365,13 @@ export const AppProvider = ({ children }) => {
       isDataLoaded,
       incomePool, budgets, categories, loans, cards, transactions, bankAccounts,
       totalExpectedIncome, totalActualIncome, totalPlannedBudget, totalActualSpent,
-      leftToSpendBalance, totalPendingLoanAmount, totalPendingPrincipal, totalFutureInterest,
+      leftToSpendBalance, totalPendingLoanAmount, getLoanExpenses,
+      confirmConfig, showConfirm, closeConfirm,
       addTransaction, deleteTransaction, updateTransaction, addIncome, transferFunds, addBankAccount, updateBankAccount, deleteBankAccount,
       addBudget, deleteBudget, updateBudgetLimit,
       addCategory, deleteCategory,
-      addCard, deleteCard, updateCardBalances,
-      addLoan
+      addCard, deleteCard, updateCardBalances, updateCardDetails,
+      addLoan, deleteLoan, updateLoan
     }}>
       {children}
     </AppContext.Provider>
