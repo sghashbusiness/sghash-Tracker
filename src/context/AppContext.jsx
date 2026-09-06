@@ -15,6 +15,10 @@ export const AppProvider = ({ children }) => {
   const [transactions, setTransactions] = useState([]);
   const [bankAccounts, setBankAccounts] = useState([]);
 
+  // Month Filtering State
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+
   // Confirm Modal State
   const [confirmConfig, setConfirmConfig] = useState({ isOpen: false, message: '', onConfirm: null });
 
@@ -360,10 +364,17 @@ export const AppProvider = ({ children }) => {
     setCards(prev => prev.map(c => c.id === id ? { ...c, unbilledBalance: Number(unbilled), statementBalance: Number(statement) } : c));
   };
 
+  const filteredTransactions = transactions.filter(t => {
+    if (!t.date) return true;
+    const d = new Date(t.date);
+    return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear;
+  });
+
   return (
     <AppContext.Provider value={{
       isDataLoaded,
-      incomePool, budgets, categories, loans, cards, transactions, bankAccounts,
+      incomePool, budgets, categories, loans, cards, transactions, filteredTransactions, bankAccounts,
+      selectedMonth, setSelectedMonth, selectedYear, setSelectedYear,
       totalExpectedIncome, totalActualIncome, totalPlannedBudget, totalActualSpent,
       leftToSpendBalance, totalPendingLoanAmount, getLoanExpenses,
       confirmConfig, showConfirm, closeConfirm,

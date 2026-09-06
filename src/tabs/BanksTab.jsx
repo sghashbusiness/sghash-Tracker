@@ -162,10 +162,17 @@ export const BanksTab = ({ onOpenTransfer, onOpenManageBanks }) => {
                     <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block' }}>
                       {card.dueRule === 'fixed_day' ? `Fixed Due: ${card.dueDay}` : `Offset Due: ${card.dueOffsetDays} days`}
                     </span>
-                    <span className={`badge ${isDueUrgent ? 'badge-rose' : 'badge-amber'}`} style={{ padding: '2px 6px', fontSize: '0.65rem' }}>
-                      <Clock size={10} />
-                      {billing.daysUntilDue > 0 ? `${billing.daysUntilDue} days left` : 'Due Today'}
-                    </span>
+                    {card.statementBalance > 0 ? (
+                      <span className={`badge ${isDueUrgent ? 'badge-rose' : 'badge-amber'}`} style={{ padding: '2px 6px', fontSize: '0.65rem' }}>
+                        <Clock size={10} />
+                        {billing.daysUntilDue > 0 ? `${billing.daysUntilDue} days left` : (billing.daysUntilDue < 0 ? `Overdue by ${Math.abs(billing.daysUntilDue)} days` : 'Due Today')}
+                      </span>
+                    ) : (
+                      <span className="badge" style={{ padding: '2px 6px', fontSize: '0.65rem', background: 'rgba(52, 211, 153, 0.1)', color: '#34d399' }}>
+                        <Clock size={10} />
+                        No Bill Due
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>

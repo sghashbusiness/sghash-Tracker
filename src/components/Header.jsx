@@ -1,12 +1,29 @@
 import React from 'react';
-import { Settings } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useApp } from '../context/AppContext';
+
+const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 export const Header = () => {
-  const currentDate = new Intl.DateTimeFormat('en-US', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric'
-  }).format(new Date());
+  const { selectedMonth, setSelectedMonth, selectedYear, setSelectedYear } = useApp();
+
+  const handlePrevMonth = () => {
+    if (selectedMonth === 0) {
+      setSelectedMonth(11);
+      setSelectedYear(selectedYear - 1);
+    } else {
+      setSelectedMonth(selectedMonth - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (selectedMonth === 11) {
+      setSelectedMonth(0);
+      setSelectedYear(selectedYear + 1);
+    } else {
+      setSelectedMonth(selectedMonth + 1);
+    }
+  };
 
   return (
     <header style={{
@@ -23,23 +40,22 @@ export const Header = () => {
     }}>
       <div>
         <img 
-          src="/AppLogo_transparent.png" 
+          src="/logo.jpg" 
           alt="App Logo" 
-          style={{ height: '40px' }}
+          style={{ height: '40px', borderRadius: '8px' }}
         />
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <div style={{
-          width: '8px',
-          height: '8px',
-          borderRadius: '50%',
-          background: 'var(--accent-emerald)',
-          boxShadow: '0 0 10px var(--accent-emerald)'
-        }} />
-        <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-          {currentDate}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.05)', padding: '4px 8px', borderRadius: '20px' }}>
+        <button onClick={handlePrevMonth} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+          <ChevronLeft size={16} />
+        </button>
+        <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)', width: '60px', textAlign: 'center' }}>
+          {months[selectedMonth]} {selectedYear}
         </span>
+        <button onClick={handleNextMonth} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+          <ChevronRight size={16} />
+        </button>
       </div>
     </header>
   );

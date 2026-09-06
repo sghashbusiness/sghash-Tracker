@@ -6,7 +6,7 @@ import { AddCategoryModal } from '../components/AddCategoryModal';
 import { AddBudgetModal } from '../components/AddBudgetModal';
 
 export const BudgetTab = () => {
-  const { budgets, categories, transactions, deleteCategory, deleteBudget } = useApp();
+  const { budgets, categories, filteredTransactions, deleteCategory, deleteBudget } = useApp();
 
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
   const [isAddBudgetOpen, setIsAddBudgetOpen] = useState(false);
@@ -15,7 +15,7 @@ export const BudgetTab = () => {
   const incomes = categories.filter(c => c.type === 'Income');
 
   const calculateSpent = (catName) => {
-    return transactions
+    return filteredTransactions
       .filter(t => t.type === 'Expense' && t.category === catName)
       .reduce((acc, t) => acc + Number(t.amount), 0);
   };

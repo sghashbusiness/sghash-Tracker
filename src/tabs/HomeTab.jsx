@@ -4,19 +4,19 @@ import { useApp } from '../context/AppContext';
 import { formatCurrency } from '../utils/finance';
 
 export const HomeTab = ({ setActiveTab }) => {
-  const { bankAccounts, transactions, budgets, categories, deleteTransaction, updateTransaction } = useApp();
+  const { bankAccounts, filteredTransactions, budgets, categories, deleteTransaction, updateTransaction } = useApp();
 
   const [editingTxId, setEditingTxId] = useState(null);
   const [editTxAmount, setEditTxAmount] = useState('');
 
   const totalBudget = budgets.reduce((sum, b) => sum + (Number(b.limit) || 0), 0);
   
-  const totalIncome = transactions
+  const totalIncome = filteredTransactions
     .filter(t => t.type === 'Income')
     .reduce((sum, t) => sum + Number(t.amount), 0);
   
   // Calculate expenses directly from transactions
-  const totalActualSpent = transactions
+  const totalActualSpent = filteredTransactions
     .filter(t => t.type === 'Expense')
     .reduce((sum, t) => sum + Number(t.amount), 0);
 
@@ -151,7 +151,7 @@ export const HomeTab = ({ setActiveTab }) => {
               }
                 
               // Calculate total spent for this budget
-              const spent = transactions
+              const spent = filteredTransactions
                 .filter(t => t.type === 'Expense' && childCategoryNames.includes(t.category))
                 .reduce((acc, t) => acc + Number(t.amount), 0);
               
@@ -188,7 +188,7 @@ export const HomeTab = ({ setActiveTab }) => {
       <div>
         <h2 className="title-sm" style={{ color: 'var(--text-secondary)', marginBottom: '12px' }}>Recent Transactions</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {transactions.map(tx => {
+          {filteredTransactions.map(tx => {
             const isEditing = editingTxId === tx.id;
             return (
               <div key={tx.id} className="glass-card interactive-card" style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -270,7 +270,7 @@ export const HomeTab = ({ setActiveTab }) => {
               </div>
             );
           })}
-          {transactions.length === 0 && (
+          {filteredTransactions.length === 0 && (
             <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
               No recent transactions
             </div>
